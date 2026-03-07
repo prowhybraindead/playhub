@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 225 35% 8%;
+  --foreground: 205 90% 96%;
+  --card: 225 40% 11%;
+  --card-foreground: 205 90% 96%;
+  --primary: 186 100% 62%;
+  --primary-foreground: 225 35% 10%;
+  --secondary: 262 83% 67%;
+  --secondary-foreground: 225 35% 10%;
+  --muted: 223 31% 18%;
+  --muted-foreground: 210 32% 80%;
+  --accent: 202 100% 56%;
+  --accent-foreground: 225 35% 10%;
+  --border: 220 34% 24%;
+  --input: 220 34% 24%;
+  --ring: 186 100% 62%;
+  --radius: 1rem;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(0, 224, 255, 0.2), transparent 25%),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(168, 85, 247, 0.18),
+      transparent 30%
+    );
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0.8rem rgba(0, 224, 255, 0.35),
+      0 0 1.2rem rgba(168, 85, 247, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 1.5rem rgba(0, 224, 255, 0.6),
+      0 0 2rem rgba(168, 85, 247, 0.4);
+  }
+}
+
+.ocean-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
