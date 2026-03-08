@@ -8,6 +8,7 @@ import { MusicTrack } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LyricsExpandable } from "@/components/music/lyrics-expandable";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { YouTubePlayer } from "@/components/music/youtube-player";
 
 export function MusicDetail({ track }: { track: MusicTrack | null }) {
   const { t } = useTranslation();
@@ -66,6 +67,9 @@ export function MusicDetail({ track }: { track: MusicTrack | null }) {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Play Video Button Component */}
+        <YouTubePlayer track={track} />
+
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading lyrics...")}
