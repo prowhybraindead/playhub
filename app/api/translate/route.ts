@@ -68,66 +68,69 @@ ${JSON.stringify(missingTexts)}
 
 Respond ONLY with a valid JSON array of strings matching the input length.`;
 
-    const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "model": "nvidia/nemotron-3-nano-30b-a3b:free",
-        "messages": [
-          {
-            "role": "user",
-            "content": prompt
-          }
-        ]
-      })
-    });
+    let translatedMissingTexts: string[] = [];
+    let isApiSuccess = false;
 
-    if (!openRouterRes.ok) {
-      throw new Error(`OpenRouter API failed: ${openRouterRes.statusText}`);
-    }
-
-    const openRouterData = await openRouterRes.json();
-    let outputText = openRouterData.choices?.[0]?.message?.content || "[]";
-    
-    // Sometimes models wrap JSON in markdown blocks like ```json ... ```
-    if (outputText.startsWith("\`\`\`json")) {
-       outputText = outputText.replace(/^\`\`\`json\s*/, "").replace(/\s*\`\`\`$/, "");
-    } else if (outputText.startsWith("\`\`\`")) {
-       outputText = outputText.replace(/^\`\`\`\s*/, "").replace(/\s*\`\`\`$/, "");
-    }
-
-    let translatedMissingTexts;
     try {
-      translatedMissingTexts = JSON.parse(outputText);
-    } catch (parseError) {
-      console.error("Failed to parse OpenRouter response:", outputText);
-      throw new Error("Translation output mismatch (Invalid JSON)");
-    }
+      const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "model": "nvidia/nemotron-3-nano-30b-a3b:free",
+          "messages": [
+            {
+              "role": "user",
+              "content": prompt
+            }
+          ]
+        })
+      });
 
-    if (!Array.isArray(translatedMissingTexts) || translatedMissingTexts.length !== missingTexts.length) {
-      throw new Error("Translation output mismatch");
+      if (!openRouterRes.ok) {
+        throw new Error(`OpenRouter API failed: ${openRouterRes.statusText}`);
+      }
+
+      const openRouterData = await openRouterRes.json();
+      let outputText = openRouterData.choices?.[0]?.message?.content || "[]";
+      
+      if (outputText.startsWith("\`\`\`json")) {
+         outputText = outputText.replace(/^\`\`\`json\s*/, "").replace(/\s*\`\`\`$/, "");
+      } else if (outputText.startsWith("\`\`\`")) {
+         outputText = outputText.replace(/^\`\`\`\s*/, "").replace(/\s*\`\`\`$/, "");
+      }
+
+      translatedMissingTexts = JSON.parse(outputText);
+
+      if (!Array.isArray(translatedMissingTexts) || translatedMissingTexts.length !== missingTexts.length) {
+        throw new Error("Translation output mismatch length");
+      }
+      isApiSuccess = true;
+    } catch (apiError) {
+      console.warn("[i18n] Fallback triggered due to API error:", apiError);
+      // Fallback: Just return the original words so UI doesn't break
     }
 
     // Step 3: Map AI results back and save to Database Cache
-    const newDbEntries: any[] = [];
-    missingIndices.forEach((originalIndex, i) => {
-      finalTranslations[originalIndex] = translatedMissingTexts[i];
-      newDbEntries.push({
-        original_text: missingTexts[i],
-        translated_text: translatedMissingTexts[i],
-        target_language: targetLanguage
+    if (isApiSuccess) {
+      const newDbEntries: any[] = [];
+      missingIndices.forEach((originalIndex, i) => {
+        finalTranslations[originalIndex] = translatedMissingTexts[i];
+        newDbEntries.push({
+          original_text: missingTexts[i],
+          translated_text: translatedMissingTexts[i],
+          target_language: targetLanguage
+        });
       });
-    });
 
-    if (newDbEntries.length > 0) {
-       // Insert new translations, ignore on conflict so we don't crash
-       await supabase.from("i18n_translations").upsert(newDbEntries, { 
-         onConflict: 'original_text,target_language',
-         ignoreDuplicates: true 
-       });
+      if (newDbEntries.length > 0) {
+         await supabase.from("i18n_translations").upsert(newDbEntries, { 
+           onConflict: 'original_text,target_language',
+           ignoreDuplicates: true 
+         });
+      }
     }
 
     return NextResponse.json({ translations: finalTranslations });

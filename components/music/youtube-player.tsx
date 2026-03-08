@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import ReactPlayer from "react-player";
 import { X, Maximize2, Minimize2, Loader2, PlaySquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,11 @@ export function YouTubePlayer({ track }: { track: MusicTrack | null }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Reset state when track changes
@@ -60,7 +66,7 @@ export function YouTubePlayer({ track }: { track: MusicTrack | null }) {
         )}
       </Button>
 
-      {isOpen && (
+      {isOpen && mounted && createPortal(
         <div className={`fixed z-50 transition-all duration-300 shadow-2xl overflow-hidden bg-black border border-slate-800 rounded-xl
           ${isMinimized 
             ? "bottom-4 right-4 w-72 h-48 sm:w-80 sm:h-52" 
@@ -115,7 +121,7 @@ export function YouTubePlayer({ track }: { track: MusicTrack | null }) {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   );
 }
