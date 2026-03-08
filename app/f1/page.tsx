@@ -24,8 +24,8 @@ export default async function Formula1Page() {
         <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             {/* F1 Logo Accent */}
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-600 to-red-500 shadow-lg shadow-red-500/20">
-              <span className="text-xl font-black text-white">F1</span>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-lg shadow-red-500/20 overflow-hidden shrink-0">
+              <img src="https://logo.clearbit.com/formula1.com" alt="F1 Logo" className="w-full h-full object-contain p-1" />
             </div>
             <div>
               <h1 className="flex items-center gap-2 text-xl font-extrabold uppercase tracking-tight text-white sm:text-2xl md:text-3xl">

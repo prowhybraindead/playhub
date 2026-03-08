@@ -86,6 +86,23 @@ const teamColors: Record<string, string> = {
   "Renault": "#FFF500",
 };
 
+const teamLogoUrls: Record<string, string> = {
+  "Mercedes": "https://logo.clearbit.com/mercedesamgf1.com",
+  "Red Bull": "https://logo.clearbit.com/redbullracing.com",
+  "Ferrari": "https://logo.clearbit.com/ferrari.com",
+  "McLaren": "https://logo.clearbit.com/mclaren.com",
+  "Aston Martin": "https://logo.clearbit.com/astonmartinf1.com",
+  "Alpine F1 Team": "https://logo.clearbit.com/alpinecars.com",
+  "Williams": "https://logo.clearbit.com/williamsf1.com",
+  "RB F1 Team": "https://logo.clearbit.com/visacashapprb.com",
+  "Kick Sauber": "https://logo.clearbit.com/sauber-group.com",
+  "Haas F1 Team": "https://logo.clearbit.com/haasf1team.com",
+  "AlphaTauri": "https://logo.clearbit.com/scuderiaalphatauri.com",
+  "Alfa Romeo": "https://logo.clearbit.com/sauber-group.com",
+  "Racing Point": "https://logo.clearbit.com/astonmartinf1.com",
+  "Renault": "https://logo.clearbit.com/renaultgroup.com",
+};
+
 const podiumEmojis: Record<string, string> = { "1": "🥇", "2": "🥈", "3": "🥉" };
 
 export function HistoricalLeaderboard({ 
@@ -296,7 +313,9 @@ export function HistoricalLeaderboard({
                     </div>
                     <div className="divide-y divide-slate-800/30">
                       {results.map((result) => {
-                        const teamColor = teamColors[result.Constructor.name] || "#666";
+                        const teamName = result.Constructor.name;
+                        const teamColor = teamColors[teamName] || "#666";
+                        const teamLogo = teamLogoUrls[teamName];
                         const isPodium = ["1", "2", "3"].includes(result.position);
                         return (
                           <div key={result.position} className={`grid grid-cols-[44px_minmax(120px,2fr)_minmax(80px,1fr)_minmax(60px,80px)] sm:grid-cols-[44px_44px_minmax(140px,2fr)_minmax(100px,1.2fr)_minmax(80px,1fr)_60px] md:grid-cols-[44px_44px_minmax(160px,2fr)_minmax(120px,1.2fr)_minmax(90px,1fr)_60px_minmax(80px,1fr)] items-center px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-slate-800/40 transition-all duration-150 group ${isPodium ? "bg-slate-800/20" : ""}`}>
@@ -309,12 +328,16 @@ export function HistoricalLeaderboard({
                                   <span className="hidden sm:inline text-[10px] sm:text-xs font-normal text-slate-400 capitalize mr-1">{result.Driver.givenName}</span>
                                   {result.Driver.familyName}
                                 </span>
-                                <span className="text-[9px] text-slate-500 sm:hidden truncate">{result.Constructor.name}</span>
+                                <span className="text-[9px] text-slate-500 sm:hidden truncate">{teamName}</span>
                               </div>
                             </div>
                             <div className="hidden sm:flex items-center gap-1.5 min-w-0">
-                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
-                              <span className="text-[10px] sm:text-xs text-slate-400 truncate">{result.Constructor.name}</span>
+                              {teamLogo ? (
+                                <img src={teamLogo} alt={teamName} className="w-4 h-4 object-contain rounded-sm" />
+                              ) : (
+                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
+                              )}
+                              <span className="text-[10px] sm:text-xs text-slate-400 truncate">{teamName}</span>
                             </div>
                             <div className="text-right font-mono text-[10px] sm:text-xs text-slate-300 truncate">
                               {result.status === "Finished" || result.status.includes("+") ? (result.Time?.time || result.status) : <span className="text-red-400 font-semibold">{result.status}</span>}
@@ -354,6 +377,7 @@ export function HistoricalLeaderboard({
                       {driverStandings.map((std) => {
                         const teamName = std.Constructors[0]?.name || "Unknown";
                         const teamColor = teamColors[teamName] || "#666";
+                        const teamLogo = teamLogoUrls[teamName];
                         const isTop3 = ["1", "2", "3"].includes(std.position);
                         return (
                           <div key={std.position} className={`grid grid-cols-[44px_minmax(120px,2fr)_minmax(100px,1.2fr)_minmax(60px,80px)_minmax(60px,80px)] items-center px-4 py-2.5 hover:bg-slate-800/40 transition-all duration-150 group ${isTop3 ? "bg-slate-800/20" : ""}`}>
@@ -367,7 +391,8 @@ export function HistoricalLeaderboard({
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="text-xs text-slate-400 truncate">{teamName}</span>
+                              {teamLogo && <img src={teamLogo} alt={teamName} className="w-4 h-4 object-contain rounded-sm hidden sm:block" />}
+                              <span className="text-[9px] sm:text-xs text-slate-400 truncate">{teamName}</span>
                             </div>
                             <div className="text-right font-mono text-xs text-slate-300">{std.wins}</div>
                             <div className="text-right font-bold text-emerald-400 text-sm">{std.points}</div>
@@ -395,13 +420,16 @@ export function HistoricalLeaderboard({
                     </div>
                     <div className="divide-y divide-slate-800/30">
                       {constructorStandings.map((std) => {
-                        const teamColor = teamColors[std.Constructor.name] || "#666";
+                        const teamName = std.Constructor.name;
+                        const teamColor = teamColors[teamName] || "#666";
+                        const teamLogo = teamLogoUrls[teamName];
                         return (
                           <div key={std.position} className="grid grid-cols-[44px_minmax(150px,2fr)_minmax(60px,80px)_minmax(60px,80px)] items-center px-4 py-2.5 hover:bg-slate-800/40 transition-all duration-150 group">
                             <div className="text-center"><span className="font-mono text-sm font-bold text-slate-300">{std.position}</span></div>
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                               <div className="w-1.5 h-8 rounded-full shrink-0 group-hover:h-10 transition-all duration-200" style={{ backgroundColor: teamColor }} />
-                              <span className="font-bold text-white text-sm uppercase tracking-wide truncate">{std.Constructor.name}</span>
+                              {teamLogo && <img src={teamLogo} alt={teamName} className="w-5 h-5 sm:w-6 sm:h-6 object-contain rounded-sm bg-white/10 p-0.5" />}
+                              <span className="font-bold text-white text-xs sm:text-sm uppercase tracking-wide truncate">{teamName}</span>
                             </div>
                             <div className="text-right font-mono text-xs text-slate-300">{std.wins}</div>
                             <div className="text-right font-bold text-emerald-400 text-sm">{std.points}</div>
