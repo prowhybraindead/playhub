@@ -88,21 +88,21 @@ const teamColors: Record<string, string> = {
 };
 
 const teamLogoUrls: Record<string, string> = {
-  "Mercedes": "https://logo.clearbit.com/mercedesamgf1.com",
-  "Red Bull": "https://logo.clearbit.com/redbullracing.com",
-  "Ferrari": "https://logo.clearbit.com/ferrari.com",
-  "McLaren": "https://logo.clearbit.com/mclaren.com",
-  "Aston Martin": "https://logo.clearbit.com/astonmartinf1.com",
-  "Alpine F1 Team": "https://logo.clearbit.com/alpinecars.com",
-  "Williams": "https://logo.clearbit.com/williamsf1.com",
-  "RB F1 Team": "https://logo.clearbit.com/visacashapprb.com",
-  "Kick Sauber": "https://logo.clearbit.com/sauber-group.com",
-  "Haas F1 Team": "https://logo.clearbit.com/haasf1team.com",
-  "AlphaTauri": "https://logo.clearbit.com/scuderiaalphatauri.com",
-  "Alfa Romeo": "https://logo.clearbit.com/sauber-group.com",
-  "Racing Point": "https://logo.clearbit.com/astonmartinf1.com",
-  "Renault": "https://logo.clearbit.com/renaultgroup.com",
-  "Cadillac F1 Team": "https://logo.clearbit.com/cadillac.com",
+  "Mercedes": "https://www.google.com/s2/favicons?domain=mercedesamgf1.com&sz=128",
+  "Red Bull": "https://www.google.com/s2/favicons?domain=redbullracing.com&sz=128",
+  "Ferrari": "https://www.google.com/s2/favicons?domain=ferrari.com&sz=128",
+  "McLaren": "https://www.google.com/s2/favicons?domain=mclaren.com&sz=128",
+  "Aston Martin": "https://www.google.com/s2/favicons?domain=astonmartinf1.com&sz=128",
+  "Alpine F1 Team": "https://www.google.com/s2/favicons?domain=alpinecars.com&sz=128",
+  "Williams": "https://www.google.com/s2/favicons?domain=williamsf1.com&sz=128",
+  "RB F1 Team": "https://www.google.com/s2/favicons?domain=visacashapprb.com&sz=128",
+  "Kick Sauber": "https://www.google.com/s2/favicons?domain=sauber-group.com&sz=128",
+  "Haas F1 Team": "https://www.google.com/s2/favicons?domain=haasf1team.com&sz=128",
+  "AlphaTauri": "https://www.google.com/s2/favicons?domain=scuderiaalphatauri.com&sz=128",
+  "Alfa Romeo": "https://www.google.com/s2/favicons?domain=sauber-group.com&sz=128",
+  "Racing Point": "https://www.google.com/s2/favicons?domain=astonmartinf1.com&sz=128",
+  "Renault": "https://www.google.com/s2/favicons?domain=renaultgroup.com&sz=128",
+  "Cadillac F1 Team": "https://www.google.com/s2/favicons?domain=cadillac.com&sz=128",
 };
 
 const podiumEmojis: Record<string, string> = { "1": "🥇", "2": "🥈", "3": "🥉" };

@@ -25,7 +25,7 @@ export default async function Formula1Page() {
           <div className="flex items-center gap-4">
             {/* F1 Logo Accent */}
             <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-lg shadow-red-500/20 overflow-hidden shrink-0">
-              <img src="https://logo.clearbit.com/formula1.com" alt="F1 Logo" className="w-full h-full object-contain p-1" />
+              <img src="https://www.google.com/s2/favicons?domain=formula1.com&sz=128" alt="F1 Logo" className="w-full h-full object-contain p-2" />
             </div>
             <div>
               <h1 className="flex items-center gap-2 text-xl font-extrabold uppercase tracking-tight text-white sm:text-2xl md:text-3xl">
