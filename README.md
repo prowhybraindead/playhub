@@ -1,74 +1,96 @@
 # Dolphin Playhub
 
-Your personal ocean of fun.
+Your personal ocean of fun. A premium, aesthetic dashboard built with Next.js 14 App Router, featuring AI-powered translations, real-time communication, Formula 1 historical tracking, and global music discovery.
 
-## Stack
+![Dolphin Logo](./public/favicon.ico)
 
-- Next.js 16 (App Router) + TypeScript strict mode
-- Tailwind CSS + shadcn/ui style components + Framer Motion
-- Supabase Auth + Postgres + Realtime + Presence + Storage
-- Lucide icons + Sonner toasts
+## 🚀 Tech Stack
 
-## Quick Start
+- **Framework**: Next.js 14 (App Router) + TypeScript
+- **UI & Styling**: Tailwind CSS, shadcn/ui, Framer Motion, local glassmorphism styles
+- **Database & Auth**: Supabase (PostgreSQL, Auth, Realtime presence, Storage)
+- **State & Query**: React Hooks, server-side data fetching
+- **Media & Icons**: Lucide React, `react-player` (YouTube IFrame API)
 
-1. Install dependencies:
+## ✨ Core Features
+
+### 🌐 Global AI Translation (i18n)
+
+- Powered by **OpenRouter (Nemotron 3 Nano)** with intelligent fallback logic.
+- Translates the entire UI dynamically via a custom `TranslationContext` and `TranslationQueue`.
+- Aggressive Database Caching: Translations are saved to Supabase (`i18n_translations`) to eliminate redundant LLM calls and eliminate latency.
+
+### 🏎️ Formula 1 Hub
+
+- **Historical Tracker**: Browse race results and standings from the 1950s to present via the **Jolpi Ergast API**.
+- **F1 AI Assistant**:
+  - _Mechanism 1 (Auto-Pilot)_: Periodically broadcasts summarized race commentary.
+  - _Mechanism 2 (Interactive)_: Users can chat directly with the AI specifically tuned for F1 domain knowledge.
+
+### 💬 Realtime Chat & Gemini Agent
+
+- **Supabase Realtime**: Live messaging with typing indicators for all online users.
+- **@gemini Integration**: Mention the bot in chat to trigger the Google Gemini AI for instant responsive answers directly within the public channel.
+
+### 🎵 Music & Radio
+
+- **Music Browser**: Search TheAudioDB.
+- **Lyrics Engine**: Multi-tiered lyrics fetching (Lyrics.ovh primary, LRCLIB fallback).
+- **Official Videos**: Automatically searches the **YouTube Data API v3** to find official music videos, rendering them in a floating, minimizable `<YouTubePlayer>` using `react-player`.
+- **Global Radio**: Stream international radio stations.
+
+### 💳 Dynamic Currency & Upgrades (Mocked)
+
+- Base pricing in USD.
+- Auto-detects user country via `api.country.is`.
+- Converts currency in real-time via Fawazahmed API (or Frankfurter), caching exchange rates in Supabase for 24 hours.
+
+## 🛠️ Quick Start
+
+**1. Install dependencies:**
 
 ```bash
 npm install
 ```
 
-2. Copy env:
+**2. Setup Configuration:**
+
+Create a `.env.local` file by copying `.env.example`:
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. Fill `.env.local` with your Supabase keys.
+You must fill in the following API keys for the app to function fully:
 
-4. Run SQL in Supabase SQL Editor:
+- `NEXT_PUBLIC_SUPABASE_URL` & `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (Required for server-side cache inserts)
+- `OPENROUTER_API_KEY` (For i18n Translation and F1 Commentary)
+- `GEMINI_API_KEY` (For the Realtime Chatbot)
+- `NEXT_PUBLIC_THEAUDIODB_API_KEY` (Defaults to "2" for dev test endpoints)
+
+**3. Database Schema:**
+
+Execute the provided SQL script in your Supabase SQL Editor to generate the necessary tables, Realtime configurations, and RLS policies:
 
 ```sql
 -- Paste contents of supabase/schema.sql
 ```
 
-5. Start app:
+**4. Start the Application:**
 
 ```bash
 npm run dev
 ```
 
-## Supabase Setup Checklist
+## ☁️ Vercel Deployment
 
-- Enable Email + Password and Google OAuth in Auth providers.
-- Add redirect URL: `http://localhost:3000/auth/callback` for local.
-- Run [schema.sql](./supabase/schema.sql).
-- Ensure Realtime is enabled for `profiles`, `subscriptions`, `chat_messages`.
+1. Push your repository to GitHub.
+2. Import the project into Vercel.
+3. Add all environment variables from `.env.local`.
+4. In Supabase Auth, remember to add your production domain to the callback URLs (`https://YOUR_DOMAIN/auth/callback`).
+5. Deploy.
 
-## Dynamic Currency & Geo Pricing
+---
 
-- Base price remains USD.
-- Geo API: `api.country.is`.
-- FX API: fawaz currency API (primary), Frankfurter (fallback).
-- Rates cached in `currency_rates` for 24 hours.
-
-## Vercel Deployment
-
-1. Push code to GitHub.
-2. Import project into Vercel.
-3. Add env vars from `.env.example`.
-4. In Supabase Auth, add production callback:
-   - `https://YOUR_DOMAIN/auth/callback`
-5. Deploy and test login + realtime chat + upgrade flow.
-
-## Add More Sections Later
-
-1. Add `app/<section>/page.tsx`.
-2. Fetch typed data in `lib/section-data.ts` (or new dedicated file).
-3. Render via `SectionShell` for search/grid/detail/expand pattern.
-4. Add sidebar nav entry in `components/layout/sidebar.tsx`.
-
-## Notes
-
-- Payments are fake-only by design.
-- Upgrade action writes to `subscriptions` + `transactions`.
-- Lyrics endpoint auto-falls back to LRCLIB.
+_Note: All payment and subscription upgrades inside the app are entirely simulated. No real payment processors are connected._
