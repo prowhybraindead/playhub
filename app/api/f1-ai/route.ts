@@ -68,12 +68,11 @@ ${explicitRaceData}`;
 
     // Priority list of models requested by the user
     // OpenRouter supports passing an array of models for automatic fallback starting with the first
+    // Note: OpenRouter API limits this array to a maximum of 3 items.
     const fallbackModels = [
       "qwen/qwen3-next-80b-a3b-instruct:free",
       "arcee-ai/trinity-large-preview:free",
-      "z-ai/glm-4.5-air:free",
-      "google/gemini-2.5-flash:free", // Safety fallback
-      "qwen/qwen-2.5-72b-instruct:free" // Extra free safety net
+      "z-ai/glm-4.5-air:free"
     ];
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
