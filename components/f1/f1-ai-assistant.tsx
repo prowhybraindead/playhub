@@ -27,7 +27,6 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
   const [aiLanguage, setAiLanguage] = useState(currentLanguage);
   const [isLoading, setIsLoading] = useState(false);
   const [autoPilot, setAutoPilot] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
 
   // Stable refs to prevent infinite dependency loops
   const isLoadingRef = useRef(false);
@@ -60,8 +59,12 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
     }
   }, [historicalContext]);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages, isLoading]);
 
   const sendToAI = useCallback(async (prompt: string, isAutomatic: boolean) => {
@@ -200,7 +203,7 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
 
       <CardContent className="px-2 sm:px-3 pb-2 sm:pb-3 pt-2 flex-1 overflow-hidden flex flex-col gap-2">
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin" ref={scrollRef}>
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs text-center p-4 gap-2">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
@@ -253,7 +256,6 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
               </div>
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
 
         {/* Input */}
