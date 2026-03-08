@@ -18,21 +18,29 @@ export default async function Formula1Page() {
   }
 
   return (
-    <div className="flex h-full min-h-screen flex-col bg-slate-950 px-3 py-6 md:px-6">
-      <div className="mx-auto w-full max-w-[1600px] space-y-4">
+    <div className="flex h-full min-h-screen flex-col bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 px-3 py-4 md:px-6 md:py-6">
+      <div className="mx-auto w-full max-w-[1700px] space-y-4">
         {/* Header */}
-        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-white md:text-4xl">
-              <span className="text-red-500">F1</span> History Hub
-            </h1>
-            <p className="text-xs font-medium text-slate-400">Past Race Results & AI Archives Analysis</p>
+        <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            {/* F1 Logo Accent */}
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-red-600 to-red-500 shadow-lg shadow-red-500/20">
+              <span className="text-xl font-black text-white">F1</span>
+            </div>
+            <div>
+              <h1 className="flex items-center gap-2 text-xl font-extrabold uppercase tracking-tight text-white sm:text-2xl md:text-3xl">
+                <span className="sm:hidden text-red-500">F1</span>
+                <span className="hidden sm:inline text-red-500">Formula 1</span>
+                <span className="text-white/90">History Hub</span>
+              </h1>
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500">Race Archives • AI Analysis • Interactive Dashboard</p>
+            </div>
           </div>
           <RaceCountdown />
         </header>
 
-        {/* Client-Side Dashboard Area containing Leaderboard & AI */}
-        <Suspense fallback={<div className="h-[600px] w-full animate-pulse rounded-xl bg-slate-800/50" />}>
+        {/* Client-Side Dashboard */}
+        <Suspense fallback={<div className="h-[600px] w-full animate-pulse rounded-2xl bg-slate-800/30" />}>
           <F1DashboardClient />
         </Suspense>
       </div>

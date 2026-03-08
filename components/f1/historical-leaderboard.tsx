@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Timer, Flag, AlertCircle } from "lucide-react";
+import { Trophy, Timer, Flag, AlertCircle, Loader2, ChevronDown } from "lucide-react";
 
 interface Race {
   round: string;
@@ -52,22 +52,23 @@ interface RaceResult {
 
 // Map constructors to F1 brand colors
 const teamColors: Record<string, string> = {
-  "Mercedes": "border-l-[#27F4D2]",
-  "Red Bull": "border-l-[#3671C6]",
-  "Ferrari": "border-l-[#E8002D]",
-  "McLaren": "border-l-[#FF8000]",
-  "Aston Martin": "border-l-[#229971]",
-  "Alpine F1 Team": "border-l-[#0093cc]",
-  "Williams": "border-l-[#64C4FF]",
-  "RB F1 Team": "border-l-[#6692FF]",
-  "Kick Sauber": "border-l-[#52E252]",
-  "Haas F1 Team": "border-l-[#B6BABD]",
-  // Fallbacks for older names
-  "AlphaTauri": "border-l-[#5E8FAA]",
-  "Alfa Romeo": "border-l-[#C92D4B]",
-  "Racing Point": "border-l-[#F596C8]",
-  "Renault": "border-l-[#FFF500]",
+  "Mercedes": "#27F4D2",
+  "Red Bull": "#3671C6",
+  "Ferrari": "#E8002D",
+  "McLaren": "#FF8000",
+  "Aston Martin": "#229971",
+  "Alpine F1 Team": "#0093cc",
+  "Williams": "#64C4FF",
+  "RB F1 Team": "#6692FF",
+  "Kick Sauber": "#52E252",
+  "Haas F1 Team": "#B6BABD",
+  "AlphaTauri": "#5E8FAA",
+  "Alfa Romeo": "#C92D4B",
+  "Racing Point": "#F596C8",
+  "Renault": "#FFF500",
 };
+
+const podiumEmojis: Record<string, string> = { "1": "🥇", "2": "🥈", "3": "🥉" };
 
 export function HistoricalLeaderboard({ 
   onRaceSelect 
@@ -76,7 +77,7 @@ export function HistoricalLeaderboard({
 }) {
   const [selectedYear, setSelectedYear] = useState<string>("2024");
   const [selectedRound, setSelectedRound] = useState<string>("1");
-  const [years, setYears] = useState<string[]>(Array.from({length: 10}, (_, i) => (new Date().getFullYear() - i).toString())); // Last 10 years
+  const years = Array.from({length: 10}, (_, i) => (new Date().getFullYear() - i).toString());
   
   const [races, setRaces] = useState<Race[]>([]);
   const [results, setResults] = useState<RaceResult[]>([]);
@@ -96,7 +97,6 @@ export function HistoricalLeaderboard({
         const raceList = data.MRData.RaceTable.Races || [];
         setRaces(raceList);
         
-        // Auto-select latest round if switching years and round not in list
         if (raceList.length > 0) {
            const roundExists = raceList.some((r: Race) => r.round === selectedRound);
            if (!roundExists) {
@@ -133,7 +133,7 @@ export function HistoricalLeaderboard({
              onRaceSelect(raceData.raceName, selectedYear, selectedRound);
           }
         } else {
-          setResults([]); // Race hasn't happened yet
+          setResults([]);
           if (onRaceSelect) {
              const upcomingRace = races.find(r => r.round === selectedRound);
              onRaceSelect(upcomingRace?.raceName || "Upcoming Race", selectedYear, selectedRound);
@@ -152,42 +152,45 @@ export function HistoricalLeaderboard({
   const currentRace = races.find(r => r.round === selectedRound);
 
   return (
-    <Card className="bg-slate-900 border-slate-800 flex flex-col h-full overflow-hidden shadow-2xl">
-      <CardHeader className="border-b border-slate-800 bg-slate-900/50 p-4 shrink-0">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <Card className="bg-slate-900/80 border-slate-800/50 backdrop-blur-sm flex flex-col h-full overflow-hidden shadow-2xl rounded-2xl">
+      {/* Header */}
+      <CardHeader className="border-b border-slate-800/50 bg-gradient-to-r from-slate-900/90 to-slate-800/50 p-3 sm:p-4 shrink-0 space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
-            <CardTitle className="text-xl font-bold text-white uppercase tracking-wider">
-              Historical Race Results
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600 shadow-md">
+              <Trophy className="w-4 h-4 text-white" />
+            </div>
+            <CardTitle className="text-sm sm:text-base font-bold text-white uppercase tracking-wider">
+              Race Results
             </CardTitle>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Year Selector */}
             <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[100px] bg-slate-800 border-slate-700 text-white focus:ring-red-500">
+              <SelectTrigger className="w-[85px] sm:w-[100px] bg-slate-800/80 border-slate-700/50 text-white text-xs sm:text-sm h-8 sm:h-9 rounded-lg focus:ring-red-500/50">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700 text-white">
                 {years.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                  <SelectItem key={year} value={year} className="text-xs sm:text-sm">{year}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            {/* Race/Round Selector */}
+            {/* Race Selector */}
             <Select 
               value={selectedRound} 
               onValueChange={setSelectedRound}
               disabled={isLoadingRaces || races.length === 0}
             >
-              <SelectTrigger className="w-[200px] sm:w-[260px] bg-slate-800 border-slate-700 text-white focus:ring-red-500 truncate">
+              <SelectTrigger className="w-[160px] sm:w-[240px] md:w-[280px] bg-slate-800/80 border-slate-700/50 text-white text-xs sm:text-sm h-8 sm:h-9 rounded-lg focus:ring-red-500/50 truncate">
                 <SelectValue placeholder="Select Race" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white max-h-[400px]">
+              <SelectContent className="bg-slate-800 border-slate-700 text-white max-h-[350px]">
                 {races.map((r) => (
-                  <SelectItem key={r.round} value={r.round}>
-                    R{r.round} - {r.raceName}
+                  <SelectItem key={r.round} value={r.round} className="text-xs sm:text-sm">
+                    R{r.round} • {r.raceName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -195,11 +198,11 @@ export function HistoricalLeaderboard({
           </div>
         </div>
 
-        {/* Selected Race Info */}
+        {/* Race Info Bar */}
         {currentRace && (
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-400">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-red-500" />
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] sm:text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               {currentRace.Circuit.circuitName}
             </span>
             <span className="flex items-center gap-1">
@@ -208,91 +211,120 @@ export function HistoricalLeaderboard({
             </span>
             <span className="flex items-center gap-1">
               <Timer className="w-3 h-3" />
-              {new Date(currentRace.date).toLocaleDateString('vi-VN')}
+              {new Date(currentRace.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </span>
           </div>
         )}
       </CardHeader>
 
-      <CardContent className="p-0 flex-1 overflow-auto bg-slate-950/50">
+      {/* Content */}
+      <CardContent className="p-0 flex-1 overflow-auto bg-slate-950/30">
         {error && (
-          <div className="p-8 flex flex-col items-center justify-center text-center text-red-400 gap-2">
-            <AlertCircle className="w-8 h-8" />
-            <p>{error}</p>
+          <div className="p-8 flex flex-col items-center justify-center text-center text-red-400 gap-3">
+            <AlertCircle className="w-10 h-10 opacity-60" />
+            <p className="text-sm">{error}</p>
           </div>
         )}
 
         {isLoadingResults ? (
-          <div className="flex flex-col p-4 gap-2">
-            {[...Array({length: 10})].map((_, i) => (
-              <div key={i} className="h-14 w-full bg-slate-800/50 animate-pulse rounded-md" />
-            ))}
+          <div className="flex flex-col items-center justify-center h-full gap-3 py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-red-500/60" />
+            <p className="text-xs text-slate-500">Loading results...</p>
           </div>
         ) : results.length === 0 && !isLoadingRaces ? (
-          <div className="p-16 flex flex-col items-center justify-center text-center text-slate-500">
-            <Flag className="w-12 h-12 mb-4 opacity-20" />
-            <h3 className="text-lg font-medium text-white mb-1">Race Not Started or No Data</h3>
-            <p className="text-sm">Results for this session are not available yet.</p>
+          <div className="p-12 sm:p-16 flex flex-col items-center justify-center text-center">
+            <Flag className="w-12 h-12 mb-4 text-slate-700" />
+            <h3 className="text-base font-semibold text-white mb-1">No Data Available</h3>
+            <p className="text-xs text-slate-500 max-w-[250px]">Results for this session are not available yet. Try selecting a past race.</p>
           </div>
         ) : (
-          <div className="min-w-[600px]">
+          <div className="overflow-x-auto">
             {/* Table Header */}
-            <div className="grid grid-cols-[60px_60px_2fr_1.5fr_1fr_1fr] md:grid-cols-[60px_60px_2fr_1.5fr_1fr_1fr_1fr] items-center px-4 py-3 border-b border-slate-800 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-900 sticky top-0 z-10">
+            <div className="grid grid-cols-[44px_minmax(120px,2fr)_minmax(80px,1fr)_minmax(60px,80px)] sm:grid-cols-[44px_44px_minmax(140px,2fr)_minmax(100px,1.2fr)_minmax(80px,1fr)_60px] md:grid-cols-[44px_44px_minmax(160px,2fr)_minmax(120px,1.2fr)_minmax(90px,1fr)_60px_minmax(80px,1fr)] items-center px-3 sm:px-4 py-2.5 border-b border-slate-800/60 text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-900/80 sticky top-0 z-10">
               <div className="text-center">Pos</div>
-              <div className="text-center">No</div>
+              <div className="text-center hidden sm:block">No</div>
               <div>Driver</div>
-              <div className="hidden sm:block">Constructor</div>
-              <div className="text-right">Time / Gap</div>
+              <div className="hidden sm:block">Team</div>
+              <div className="text-right">Time</div>
               <div className="text-right">Pts</div>
               <div className="text-right hidden md:block">Status</div>
             </div>
 
-            {/* List */}
-            <div className="flex flex-col py-2">
-              {results.map((result) => (
-                <div 
-                  key={result.position}
-                  className="grid grid-cols-[60px_60px_2fr_1.5fr_1fr_1fr] md:grid-cols-[60px_60px_2fr_1.5fr_1fr_1fr_1fr] items-center px-4 py-2 hover:bg-slate-800/80 transition-colors border-b border-white/5 last:border-0 group"
-                >
-                  <div className="text-center font-mono text-sm font-bold text-white">
-                    {result.position}
-                  </div>
-                  
-                  <div className="text-center">
-                    <Badge variant="outline" className="font-mono bg-slate-800/50 text-slate-300 border-slate-700">
-                      {result.number}
-                    </Badge>
-                  </div>
-
-                  <div className={`flex items-center gap-2 border-l-4 pl-3 py-1 ${teamColors[result.Constructor.name] || "border-l-slate-600"}`}>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-white uppercase tracking-wide text-sm flex gap-1 items-baseline">
-                        <span className="hidden sm:inline text-xs font-normal text-slate-400 capitalize">{result.Driver.givenName}</span>
-                        {result.Driver.familyName}
+            {/* Rows */}
+            <div className="divide-y divide-slate-800/30">
+              {results.map((result) => {
+                const teamColor = teamColors[result.Constructor.name] || "#666";
+                const isPodium = ["1", "2", "3"].includes(result.position);
+                
+                return (
+                  <div 
+                    key={result.position}
+                    className={`grid grid-cols-[44px_minmax(120px,2fr)_minmax(80px,1fr)_minmax(60px,80px)] sm:grid-cols-[44px_44px_minmax(140px,2fr)_minmax(100px,1.2fr)_minmax(80px,1fr)_60px] md:grid-cols-[44px_44px_minmax(160px,2fr)_minmax(120px,1.2fr)_minmax(90px,1fr)_60px_minmax(80px,1fr)] items-center px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-slate-800/40 transition-all duration-150 group ${isPodium ? "bg-slate-800/20" : ""}`}
+                  >
+                    {/* Position */}
+                    <div className="text-center">
+                      {isPodium ? (
+                        <span className="text-base">{podiumEmojis[result.position]}</span>
+                      ) : (
+                        <span className="font-mono text-xs sm:text-sm font-bold text-slate-300">
+                          {result.position}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Number */}
+                    <div className="text-center hidden sm:block">
+                      <span className="font-mono text-[10px] text-slate-500 bg-slate-800/60 rounded px-1.5 py-0.5">
+                        {result.number}
                       </span>
-                      <span className="text-[10px] text-slate-500 sm:hidden">{result.Constructor.name}</span>
+                    </div>
+
+                    {/* Driver */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div 
+                        className="w-1 h-8 rounded-full shrink-0 group-hover:h-10 transition-all duration-200" 
+                        style={{ backgroundColor: teamColor }}
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-white text-xs sm:text-sm uppercase tracking-wide truncate">
+                          <span className="hidden sm:inline text-[10px] sm:text-xs font-normal text-slate-400 capitalize mr-1">{result.Driver.givenName}</span>
+                          {result.Driver.familyName}
+                        </span>
+                        <span className="text-[9px] text-slate-500 sm:hidden truncate">{result.Constructor.name}</span>
+                      </div>
+                    </div>
+
+                    {/* Team */}
+                    <div className="hidden sm:flex items-center gap-1.5 min-w-0">
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
+                      <span className="text-[10px] sm:text-xs text-slate-400 truncate">{result.Constructor.name}</span>
+                    </div>
+
+                    {/* Time */}
+                    <div className="text-right font-mono text-[10px] sm:text-xs text-slate-300 truncate">
+                      {result.status === "Finished" || result.status.includes("+") 
+                        ? (result.Time?.time || result.status)
+                        : <span className="text-red-400 font-semibold">{result.status}</span>}
+                    </div>
+
+                    {/* Points */}
+                    <div className="text-right">
+                      {result.points !== "0" ? (
+                        <span className="font-bold text-emerald-400 text-xs sm:text-sm">+{result.points}</span>
+                      ) : (
+                        <span className="text-slate-600 text-xs">-</span>
+                      )}
+                    </div>
+
+                    {/* Status */}
+                    <div className="text-right hidden md:block">
+                      <span className={`text-[10px] font-medium ${result.status === "Finished" ? "text-emerald-500/60" : "text-red-400/60"}`}>
+                        {result.status === "Finished" ? "✓" : result.status}
+                      </span>
                     </div>
                   </div>
-
-                  <div className="hidden sm:block text-xs font-medium text-slate-400">
-                    {result.Constructor.name}
-                  </div>
-
-                  <div className="text-right font-mono text-xs text-slate-300">
-                    {result.status === "Finished" || result.status.includes("+") 
-                      ? (result.Time?.time || result.status)
-                      : <span className="text-red-400">{result.status}</span>}
-                  </div>
-
-                  <div className="text-right font-bold text-emerald-400 text-sm">
-                    {result.points !== "0" ? `+${result.points}` : "-"}
-                  </div>
-
-                  <div className="text-right hidden md:block text-xs font-medium text-slate-500">
-                    {result.status === "Finished" ? "Classified" : result.status}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

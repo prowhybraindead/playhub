@@ -12,18 +12,20 @@ export function F1DashboardClient() {
   };
 
   return (
-    <main className="grid gap-4 lg:grid-cols-[1fr_400px] h-[calc(100vh-160px)] min-h-[600px]">
-      {/* Panel 1 (Left): Full-Height Historical Leaderboard */}
-      <Suspense fallback={<div className="h-full w-full animate-pulse rounded-xl bg-slate-800/50" />}>
-        <HistoricalLeaderboard onRaceSelect={handleRaceSelect} />
-      </Suspense>
+    <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-4 min-h-[500px] lg:h-[calc(100vh-200px)]">
+      {/* Panel 1: Historical Leaderboard */}
+      <div className="h-[60vh] lg:h-full min-h-[400px]">
+        <Suspense fallback={<div className="h-full w-full animate-pulse rounded-2xl bg-slate-800/50" />}>
+          <HistoricalLeaderboard onRaceSelect={handleRaceSelect} />
+        </Suspense>
+      </div>
 
-      {/* Right Column: AI Assistant */}
-      <div className="flex flex-col gap-4 h-full min-h-0">
-        <Suspense fallback={<div className="h-full w-full animate-pulse rounded-xl bg-slate-800/50" />}>
+      {/* Panel 2: AI Assistant */}
+      <div className="h-[50vh] lg:h-full min-h-[350px]">
+        <Suspense fallback={<div className="h-full w-full animate-pulse rounded-2xl bg-slate-800/50" />}>
           <F1AIAssistant historicalContext={selectedRaceContext} />
         </Suspense>
       </div>
-    </main>
+    </div>
   );
 }

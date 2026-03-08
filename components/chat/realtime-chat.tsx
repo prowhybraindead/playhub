@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Send } from "lucide-react";
+import { Send, Hash, Users, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,15 +27,22 @@ type OnlineProfile = {
   status: string | null;
 };
 
-const ROOM_OPTIONS = ["global", "music", "anime", "books", "fantasy"];
+const ROOM_OPTIONS = [
+  { id: "global", label: "Global", emoji: "🌍" },
+  { id: "music", label: "Music", emoji: "🎵" },
+  { id: "anime", label: "Anime", emoji: "🎌" },
+  { id: "books", label: "Books", emoji: "📚" },
+  { id: "fantasy", label: "Fantasy", emoji: "🐉" },
+];
 
 export function RealtimeChat({ userId, initialRoom }: { userId: string; initialRoom: string }) {
   const { t } = useTranslation();
   const supabase = useMemo(() => createClient(), []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
-  const [activeRoom, setActiveRoom] = useState(ROOM_OPTIONS.includes(initialRoom) ? initialRoom : "global");
+  const [activeRoom, setActiveRoom] = useState(ROOM_OPTIONS.some(r => r.id === initialRoom) ? initialRoom : "global");
   const [onlineUsers, setOnlineUsers] = useState<OnlineProfile[]>([]);
+  const [showUsers, setShowUsers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -112,11 +119,9 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `room_id=eq.${activeRoom}` }, async (payload) => {
         const inserted = payload.new as { id: string; user_id: string; room_id: string; message: string; created_at: string };
         
-        // Prevent duplicates from realtime echo if we optimistically added it
         setMessages((prev) => {
           if (prev.some((m) => m.id === inserted.id)) return prev;
           
-          // We don't have the profile instantly, so we fetch it async and update state again
           void supabase.from("profiles").select("username,avatar_url,status").eq("id", inserted.user_id).maybeSingle().then(({ data: profile }) => {
             setMessages((current) => current.map((m) => m.id === inserted.id ? { ...m, profile } : m));
           });
@@ -145,9 +150,8 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
   const sendMessage = async () => {
     if (!text.trim()) return;
     const messageText = text.trim();
-    setText(""); // Clear input early
+    setText("");
 
-    // Optimistic update
     const tempId = `temp-${Date.now()}`;
     const me = onlineUsers.find((u) => u.id === userId) || null;
     const tempMsg: Message = {
@@ -164,19 +168,15 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
     
     if (error) {
       toast.error(error.message);
-      // Revert optimistic update on error
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       return;
     }
     
-    // Swap temp id with real id
     setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, id: data.id } : m));
 
-    // Handle @gemini command
     if (messageText.toLowerCase().startsWith("@gemini")) {
       const prompt = messageText.substring(7).trim();
       if (prompt) {
-        // We don't await this, let it process in the background
         fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -186,84 +186,178 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
     }
   };
 
-  return (
-    <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 py-6 lg:grid-cols-[1fr_280px] md:px-8">
-      <Card className="h-[70vh]">
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle>{t("Realtime Chat Room")}</CardTitle>
-            <div className="flex flex-wrap gap-2">
-              {ROOM_OPTIONS.map((room) => (
-                <Button key={room} size="sm" variant={activeRoom === room ? "default" : "ghost"} onClick={() => setActiveRoom(room)}>
-                  {room}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="flex h-[calc(70vh-100px)] flex-col">
-          <div className="mb-3 flex-1 space-y-3 overflow-auto pr-2">
-            {messages.map((message) => {
-              const isGemini = message.user_id === null;
-              return (
-              <div key={message.id} className="flex gap-3">
-                <Avatar className="h-8 w-8">
-                  {isGemini ? (
-                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold">✨</AvatarFallback>
-                  ) : (
-                    <>
-                      <AvatarImage src={message.profile?.avatar_url ?? undefined} />
-                      <AvatarFallback>{(message.profile?.username?.[0] ?? "U").toUpperCase()}</AvatarFallback>
-                    </>
-                  )}
-                </Avatar>
-                <div className="rounded-xl border border-border bg-background/60 px-3 py-2">
-                  <p className={`text-xs ${isGemini ? "text-purple-400 font-semibold" : "text-cyan-200"}`}>
-                    {isGemini ? "Gemini Bot" : (message.profile?.username ?? t("Unknown"))}
-                  </p>
-                  <p className="text-sm text-foreground">{message.message}</p>
-                </div>
-              </div>
-            )})}
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="flex items-center gap-2">
-            <Input
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              placeholder={`${t("Nhắn vào room #")}${activeRoom}`}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void sendMessage();
-              }}
-            />
-            <Button onClick={sendMessage} size="icon">
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+  const activeRoomInfo = ROOM_OPTIONS.find(r => r.id === activeRoom);
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Online Users")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {onlineUsers.map((profile) => (
-            <div key={profile.id} className="flex items-center gap-2">
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={profile.avatar_url ?? undefined} />
-                <AvatarFallback>{(profile.username?.[0] ?? "U").toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-              <span className="truncate">{profile.id === userId ? t("You") : profile.username ?? profile.id.slice(0, 8)}</span>
-              <Badge variant="outline" className="text-[10px]">
-                {profile.status ?? t("Online")}
+  return (
+    <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 md:px-8 md:py-6">
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_260px] gap-4">
+        {/* Main Chat Area */}
+        <Card className="border-slate-800/50 bg-slate-900/60 backdrop-blur-sm shadow-2xl rounded-2xl overflow-hidden flex flex-col h-[75vh] sm:h-[70vh]">
+          {/* Header */}
+          <CardHeader className="border-b border-slate-800/30 bg-gradient-to-r from-slate-900 to-slate-800/60 px-3 sm:px-4 py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Hash className="w-5 h-5 text-cyan-400" />
+                <CardTitle className="text-sm sm:text-base font-bold text-white">{activeRoomInfo?.emoji} {t("Realtime Chat")}</CardTitle>
+                <Badge variant="outline" className="text-[9px] border-cyan-500/30 text-cyan-400 bg-cyan-500/10 hidden sm:inline-flex">
+                  {onlineUsers.length} online
+                </Badge>
+              </div>
+              
+              {/* Room Tabs */}
+              <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
+                {ROOM_OPTIONS.map((room) => (
+                  <button
+                    key={room.id}
+                    onClick={() => setActiveRoom(room.id)}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                      activeRoom === room.id
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-sm"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent"
+                    }`}
+                  >
+                    <span>{room.emoji}</span>
+                    <span className="hidden sm:inline">{room.label}</span>
+                  </button>
+                ))}
+
+                {/* Mobile: Toggle Online Users */}
+                <button
+                  onClick={() => setShowUsers(!showUsers)}
+                  className="lg:hidden flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent transition-all"
+                >
+                  <Users className="w-3 h-3" />
+                  <span>{onlineUsers.length}</span>
+                </button>
+              </div>
+            </div>
+          </CardHeader>
+
+          {/* Mobile Online Users Drawer */}
+          {showUsers && (
+            <div className="lg:hidden border-b border-slate-800/30 bg-slate-900/80 px-3 py-2 flex gap-2 overflow-x-auto scrollbar-thin">
+              {onlineUsers.map((profile) => (
+                <div key={profile.id} className="flex items-center gap-1.5 bg-slate-800/60 rounded-full px-2 py-1 shrink-0">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={profile.avatar_url ?? undefined} />
+                    <AvatarFallback className="text-[8px]">{(profile.username?.[0] ?? "U").toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-[10px] text-slate-300 truncate max-w-[60px]">
+                    {profile.id === userId ? t("You") : profile.username ?? "User"}
+                  </span>
+                </div>
+              ))}
+              {!onlineUsers.length && <p className="text-[10px] text-slate-500">{t("No active presence yet.")}</p>}
+            </div>
+          )}
+
+          {/* Messages */}
+          <CardContent className="flex-1 overflow-hidden flex flex-col px-0 py-0">
+            <div className="flex-1 overflow-auto px-3 sm:px-4 py-3 space-y-3">
+              {messages.map((message) => {
+                const isGemini = message.user_id === null;
+                const isMe = message.user_id === userId;
+                return (
+                  <div key={message.id} className={`flex gap-2.5 ${isMe ? "flex-row-reverse" : ""}`}>
+                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 mt-0.5 shadow-sm">
+                      {isGemini ? (
+                        <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </AvatarFallback>
+                      ) : (
+                        <>
+                          <AvatarImage src={message.profile?.avatar_url ?? undefined} />
+                          <AvatarFallback className="bg-gradient-to-br from-slate-700 to-slate-600 text-slate-200 text-xs font-bold">
+                            {(message.profile?.username?.[0] ?? "U").toUpperCase()}
+                          </AvatarFallback>
+                        </>
+                      )}
+                    </Avatar>
+                    <div className={`max-w-[75%] sm:max-w-[70%] ${isMe ? "text-right" : ""}`}>
+                      <p className={`text-[10px] sm:text-xs font-semibold mb-0.5 ${isGemini ? "text-purple-400" : isMe ? "text-cyan-300" : "text-slate-400"}`}>
+                        {isGemini ? "Gemini Bot ✨" : isMe ? t("You") : (message.profile?.username ?? t("Unknown"))}
+                      </p>
+                      <div className={`rounded-2xl px-3 py-2 text-xs sm:text-sm leading-relaxed inline-block text-left ${
+                        isGemini 
+                          ? "bg-gradient-to-br from-violet-500/15 to-purple-500/10 border border-purple-500/20 text-purple-100 rounded-bl-sm"
+                          : isMe
+                          ? "bg-gradient-to-br from-cyan-600/20 to-blue-600/15 border border-cyan-500/20 text-cyan-50 rounded-br-sm"
+                          : "bg-slate-800/50 border border-slate-700/20 text-slate-200 rounded-bl-sm"
+                      }`}>
+                        {message.message}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Bar */}
+            <div className="border-t border-slate-800/30 bg-slate-900/60 px-3 sm:px-4 py-2.5 flex items-center gap-2">
+              <Input
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder={`${t("Message")} #${activeRoom}...`}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void sendMessage();
+                }}
+                className="bg-slate-800/50 border-slate-700/30 text-white text-xs sm:text-sm h-9 rounded-xl placeholder:text-slate-600 focus-visible:ring-cyan-500/30"
+              />
+              <Button 
+                onClick={sendMessage} 
+                size="icon"
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 h-9 w-9 rounded-xl shadow-md shadow-cyan-500/10 transition-all duration-200 shrink-0"
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Desktop: Online Users Sidebar */}
+        <Card className="hidden lg:flex flex-col border-slate-800/50 bg-slate-900/60 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden">
+          <CardHeader className="border-b border-slate-800/30 bg-gradient-to-r from-slate-900 to-slate-800/60 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-emerald-400" />
+              <CardTitle className="text-sm font-bold text-white">{t("Online Users")}</CardTitle>
+              <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                {onlineUsers.length}
               </Badge>
             </div>
-          ))}
-          {!onlineUsers.length ? <p className="text-muted-foreground">{t("No active presence yet.")}</p> : null}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-auto px-3 py-3 space-y-1.5">
+            {onlineUsers.map((profile) => (
+              <div key={profile.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-800/40 transition-colors">
+                <Avatar className="h-7 w-7 shadow-sm">
+                  <AvatarImage src={profile.avatar_url ?? undefined} />
+                  <AvatarFallback className="bg-gradient-to-br from-slate-700 to-slate-600 text-slate-200 text-[10px] font-bold">
+                    {(profile.username?.[0] ?? "U").toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
+                    <span className="text-xs text-white font-medium truncate">
+                      {profile.id === userId ? t("You") : profile.username ?? profile.id.slice(0, 8)}
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-500 truncate block pl-3.5">
+                    {profile.status ?? t("Online")}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {!onlineUsers.length && (
+              <div className="text-center py-8">
+                <Users className="w-8 h-8 text-slate-700 mx-auto mb-2" />
+                <p className="text-xs text-slate-500">{t("No active presence yet.")}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
