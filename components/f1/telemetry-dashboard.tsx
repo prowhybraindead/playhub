@@ -33,9 +33,9 @@ export function TelemetryDashboard() {
         setLoading(true);
         setError(null);
         // Using session_key=latest to get the most recent active session data
-        // For demonstration we limit to last 100 entries to make drawing smooth and fast
-        const res = await fetch(`https://api.openf1.org/v1/car_data?driver_number=${driver}&session_key=latest`);
-        if (!res.ok) throw new Error("Failed to fetch OpenF1 telemetry");
+        // Using our Next.js API proxy to bypass CORS
+        const res = await fetch(`/api/openf1?driver_number=${driver}&session_key=latest`);
+        if (!res.ok) throw new Error("Failed to fetch telemetry from proxy");
         
         const rawData = await res.json();
         
@@ -107,7 +107,7 @@ export function TelemetryDashboard() {
              <p>{error}</p>
           </div>
         ) : (
-          <div className="flex-grow min-h-[250px] w-full mt-4">
+          <div className="flex-grow min-h-[300px] h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>

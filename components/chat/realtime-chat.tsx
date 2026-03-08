@@ -65,13 +65,16 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
         return;
       }
 
-      const userIds = Array.from(new Set(rawMessages.map((m) => m.user_id)));
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id,username,avatar_url,status")
-        .in("id", userIds);
-
-      const profilesList = (profilesData ?? []) as any[];
+      const userIds = Array.from(new Set(rawMessages.map((m) => m.user_id))).filter(id => id !== null);
+      
+      let profilesList: any[] = [];
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id,username,avatar_url,status")
+          .in("id", userIds);
+        profilesList = profilesData ?? [];
+      }
 
       const normalized = rawMessages.map((item) => {
         const profile = profilesList.find((p) => p.id === item.user_id) ?? null;
