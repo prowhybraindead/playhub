@@ -24,6 +24,10 @@ export function YouTubePlayer({ track }: { track: MusicTrack | null }) {
       
       const data = await res.json();
       
+      if (!data.videoId) {
+         throw new Error(t("Không thể tìm thấy ID video hợp lệ cho bài hát này"));
+      }
+      
       setTrack({
         id: data.videoId,
         title: track.strTrack || "Unknown Title",

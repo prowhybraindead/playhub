@@ -9,7 +9,8 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 
 // CRITICAL: react-player MUST be loaded client-side only. 
 // SSR breaks the YouTube IFrame API initialization.
-const ReactPlayer = dynamic(() => import("react-player"), { ssr: false }) as any;
+// @ts-ignore
+const ReactPlayer = dynamic(() => import("react-player/youtube"), { ssr: false }) as any;
 
 export function GlobalPlayer() {
   const { t } = useTranslation();
@@ -81,27 +82,34 @@ export function GlobalPlayer() {
           </div>
         )}
 
-        <ReactPlayer
-          url={`https://www.youtube.com/watch?v=${currentTrackId}`}
-          playing={isPlaying}
-          controls={true}
-          volume={isMuted ? 0 : volume}
-          width="100%"
-          height="100%"
-          onPlay={play}
-          onPause={pause}
-          style={{ position: 'absolute', top: 0, left: 0 }}
-          config={{
-            youtube: {
-              playerVars: { 
-                showinfo: 0, 
-                modestbranding: 1, 
-                rel: 0,
-                color: 'white'
+        {currentTrackId ? (
+          <ReactPlayer
+            url={`https://www.youtube.com/watch?v=${currentTrackId}`}
+            playing={isPlaying}
+            controls={true}
+            volume={isMuted ? 0 : volume}
+            width="100%"
+            height="100%"
+            onPlay={play}
+            onPause={pause}
+            style={{ position: 'absolute', top: 0, left: 0 }}
+            config={{
+              youtube: {
+                playerVars: { 
+                  showinfo: 0, 
+                  modestbranding: 1, 
+                  rel: 0,
+                  color: 'white'
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2 bg-slate-900 absolute inset-0">
+            <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+            <span className="text-xs font-medium">{t("Searching YouTube...")}</span>
+          </div>
+        )}
         
         {/* Custom Controls Overlay (visible on hover or pause) */}
         <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity z-20 ${!isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} pointer-events-none`}>
