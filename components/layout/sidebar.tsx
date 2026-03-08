@@ -40,13 +40,13 @@ export async function Sidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border/60 bg-card/60 px-4 py-6 backdrop-blur md:flex md:flex-col">
-      <Link href="/dashboard" className="mb-6 flex items-center gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 p-3">
-        <div className="rounded-xl bg-cyan-300/20 p-2">
-          <Waves className="h-6 w-6 text-cyan-200" />
+      <Link href="/dashboard" className="mb-6 flex items-center gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-950/40 p-3 shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] group">
+        <div className="rounded-xl flex items-center justify-center p-1">
+          <img src="/dolphin-logo.png" alt="Dolphin Logo" className="h-10 w-10 object-contain drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] group-hover:drop-shadow-[0_0_12px_rgba(34,211,238,1)] transition-all duration-300" />
         </div>
         <div>
-          <p className="font-semibold tracking-wide">Dolphin Playhub</p>
-          <p className="text-xs text-muted-foreground"><T>Your personal ocean of fun</T></p>
+          <p className="font-bold text-lg tracking-wide bg-gradient-to-r from-cyan-300 to-blue-500 bg-clip-text text-transparent drop-shadow-sm">Dolphin Playhub</p>
+          <p className="text-xs text-cyan-200/70"><T>Your personal ocean of fun</T></p>
         </div>
       </Link>
 
