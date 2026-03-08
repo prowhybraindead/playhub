@@ -16,6 +16,7 @@ interface Circuit {
     locality: string;
     country: string;
   };
+  imageUrl?: string;
 }
 
 export function F1Circuits() {
@@ -34,7 +35,28 @@ export function F1Circuits() {
         const res = await fetch(`https://api.jolpi.ca/ergast/f1/${selectedYear}/circuits.json`);
         if (!res.ok) throw new Error("Failed to fetch circuits");
         const data = await res.json();
-        setCircuits(data.MRData.CircuitTable.Circuits || []);
+        let rawCircuits = data.MRData.CircuitTable.Circuits || [];
+
+        // Fetch Wikipedia Images
+        const enhancedCircuits = await Promise.all(
+          rawCircuits.map(async (circuit: Circuit) => {
+             try {
+               const titleMatch = circuit.url.match(/wiki\/(.+)$/);
+               if (titleMatch && titleMatch[1]) {
+                 const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${titleMatch[1]}`);
+                 const wikiData = await wikiRes.json();
+                 if (wikiData.thumbnail?.source) {
+                    return { ...circuit, imageUrl: wikiData.thumbnail.source };
+                 }
+               }
+             } catch (e) {
+               console.error("Failed to fetch image for", circuit.circuitName);
+             }
+             return circuit;
+          })
+        );
+        
+        setCircuits(enhancedCircuits);
       } catch (err: any) {
         setError("Error loading circuits data.");
         console.error(err);
@@ -122,14 +144,26 @@ export function F1Circuits() {
                       <Navigation className="w-16 h-16 text-white" />
                     </div>
 
-                    <div className="flex items-start justify-between w-full mb-4 z-10">
-                      <div className="flex flex-col pr-2">
-                        <span className="text-[10px] font-medium text-emerald-400 uppercase tracking-wider mb-1.5 line-clamp-1">
-                          {circuit.Location.country}
-                        </span>
-                        <h3 className="text-base sm:text-lg font-bold text-white leading-tight line-clamp-2">
-                          {circuit.circuitName}
-                        </h3>
+                    <div className="flex items-start justify-between w-full mb-4 z-10 gap-2">
+                      <div className="flex items-center gap-3">
+                        {circuit.imageUrl ? (
+                          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-slate-700/50 bg-slate-800">
+                             {/* eslint-disable-next-line @next/next/no-img-element */}
+                             <img src={circuit.imageUrl} alt={circuit.circuitName} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-slate-800 shrink-0 border-2 border-slate-700/50 flex items-center justify-center">
+                             <MapPin className="w-4 h-4 text-slate-500" />
+                          </div>
+                        )}
+                        <div className="flex flex-col pr-2">
+                          <span className="text-[10px] font-medium text-emerald-400 uppercase tracking-wider mb-1 line-clamp-1">
+                            {circuit.Location.country}
+                          </span>
+                          <h3 className="text-base sm:text-sm font-bold text-white leading-tight line-clamp-2">
+                            {circuit.circuitName}
+                          </h3>
+                        </div>
                       </div>
                       <span className="text-2xl drop-shadow-md shrink-0" title={circuit.Location.country}>
                         {getFlagEmoji(circuit.Location.country)}

@@ -15,6 +15,7 @@ interface Driver {
   familyName: string;
   dateOfBirth: string;
   nationality: string;
+  imageUrl?: string;
 }
 
 export function F1Drivers() {
@@ -33,7 +34,28 @@ export function F1Drivers() {
         const res = await fetch(`https://api.jolpi.ca/ergast/f1/${selectedYear}/drivers.json`);
         if (!res.ok) throw new Error("Failed to fetch drivers");
         const data = await res.json();
-        setDrivers(data.MRData.DriverTable.Drivers || []);
+        let rawDrivers = data.MRData.DriverTable.Drivers || [];
+
+        // Fetch Wikipedia Images
+        const enhancedDrivers = await Promise.all(
+          rawDrivers.map(async (driver: Driver) => {
+             try {
+               const titleMatch = driver.url.match(/wiki\/(.+)$/);
+               if (titleMatch && titleMatch[1]) {
+                 const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${titleMatch[1]}`);
+                 const wikiData = await wikiRes.json();
+                 if (wikiData.thumbnail?.source) {
+                    return { ...driver, imageUrl: wikiData.thumbnail.source };
+                 }
+               }
+             } catch (e) {
+               console.error("Failed to fetch image for", driver.givenName);
+             }
+             return driver;
+          })
+        );
+        
+        setDrivers(enhancedDrivers);
       } catch (err: any) {
         setError("Error loading drivers data.");
         console.error(err);
@@ -122,18 +144,30 @@ export function F1Drivers() {
                       </span>
                     </div>
 
-                    <div className="flex items-start justify-between w-full mb-4 z-10">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-1">
-                          {driver.code || "N/A"}
-                        </span>
-                        <h3 className="text-xl font-bold text-white leading-tight">
-                          <span className="font-light text-slate-300 mr-1.5">{driver.givenName}</span>
-                          <br className="hidden sm:block" />
-                          <span className="uppercase">{driver.familyName}</span>
-                        </h3>
+                    <div className="flex items-start justify-between w-full mb-4 z-10 gap-2">
+                      <div className="flex items-center gap-3">
+                        {driver.imageUrl ? (
+                          <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 border-slate-700/50 relative bg-slate-800">
+                             {/* eslint-disable-next-line @next/next/no-img-element */}
+                             <img src={driver.imageUrl} alt={driver.givenName} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-slate-800 shrink-0 border-2 border-slate-700/50 flex items-center justify-center">
+                             <Users className="w-5 h-5 text-slate-500" />
+                          </div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-0.5">
+                            {driver.code || "N/A"}
+                          </span>
+                          <h3 className="text-lg font-bold text-white leading-tight">
+                            <span className="font-light text-slate-300 mr-1.5">{driver.givenName}</span>
+                            <br className="hidden sm:block" />
+                            <span className="uppercase">{driver.familyName}</span>
+                          </h3>
+                        </div>
                       </div>
-                      <span className="text-2xl drop-shadow-md" title={driver.nationality}>
+                      <span className="text-2xl drop-shadow-md shrink-0" title={driver.nationality}>
                         {getFlagEmoji(driver.nationality)}
                       </span>
                     </div>

@@ -54,13 +54,13 @@ export function F1DashboardClient() {
           </div>
         </TabsContent>
 
-        <TabsContent value="drivers" className="mt-0 focus-visible:outline-none focus-visible:ring-0 min-h-[500px] lg:h-[calc(100vh-220px)] overflow-hidden">
+        <TabsContent value="drivers" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
           <Suspense fallback={<div className="h-[500px] w-full animate-pulse rounded-2xl bg-slate-800/50" />}>
             <F1Drivers />
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="circuits" className="mt-0 focus-visible:outline-none focus-visible:ring-0 min-h-[500px] lg:h-[calc(100vh-220px)] overflow-hidden">
+        <TabsContent value="circuits" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
           <Suspense fallback={<div className="h-[500px] w-full animate-pulse rounded-2xl bg-slate-800/50" />}>
             <F1Circuits />
           </Suspense>
