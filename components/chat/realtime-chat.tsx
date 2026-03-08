@@ -43,6 +43,9 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
   const [activeRoom, setActiveRoom] = useState(ROOM_OPTIONS.some(r => r.id === initialRoom) ? initialRoom : "global");
   const [onlineUsers, setOnlineUsers] = useState<OnlineProfile[]>([]);
   const [showUsers, setShowUsers] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
+  const chatChannelRef = useRef<any>(null);
+  const lastTypingBroadcast = useRef<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -51,7 +54,26 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, typingUsers]);
+
+  // Clear stale typing indicators
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const [id, time] of Object.entries(next)) {
+          if (now - time > 4000) {
+            delete next[id];
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -100,9 +122,11 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
       config: {
         presence: {
           key: userId
-        }
+        },
+        broadcast: { ack: false }
       }
     });
+    chatChannelRef.current = channel;
 
     const syncOnlineUsers = async () => {
       const state = channel.presenceState();
@@ -128,6 +152,22 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
           
           return [...prev, { ...inserted, profile: null }];
         });
+
+        // Clear typing indicator when user actually sends a message
+        setTypingUsers((prev) => {
+          const next = { ...prev };
+          delete next[inserted.user_id || "gemini"];
+          return next;
+        });
+      })
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const { userId: typerId, isTyping } = payload.payload;
+        setTypingUsers((prev) => {
+          const next = { ...prev };
+          if (isTyping) next[typerId] = Date.now();
+          else delete next[typerId];
+          return next;
+        });
       })
       .on("presence", { event: "sync" }, () => {
         void syncOnlineUsers();
@@ -144,6 +184,7 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
     return () => {
       supabase.from("profiles").update({ is_online: false }).eq("id", userId);
       channel.unsubscribe();
+      chatChannelRef.current = null;
     };
   }, [activeRoom, supabase, userId]);
 
@@ -151,6 +192,16 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
     if (!text.trim()) return;
     const messageText = text.trim();
     setText("");
+    
+    // Tell others we stopped typing immediately
+    if (chatChannelRef.current) {
+      chatChannelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { userId, isTyping: false }
+      });
+      lastTypingBroadcast.current = 0;
+    }
 
     const tempId = `temp-${Date.now()}`;
     const me = onlineUsers.find((u) => u.id === userId) || null;
@@ -177,12 +228,47 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
     if (messageText.toLowerCase().startsWith("@gemini")) {
       const prompt = messageText.substring(7).trim();
       if (prompt) {
+        // Let everyone know Gemini is typing
+        if (chatChannelRef.current) {
+          chatChannelRef.current.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { userId: 'gemini', isTyping: true }
+          });
+        }
+        // Local state as well
+        setTypingUsers(prev => ({ ...prev, 'gemini': Date.now() + 10000 })); // 10s timeout buffer
+        
         fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ room_id: activeRoom, prompt })
         }).catch(err => console.error("Failed to trigger gemini chat", err));
       }
+    }
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setText(val);
+    
+    const now = Date.now();
+    if (chatChannelRef.current && now - lastTypingBroadcast.current > 2000) {
+      chatChannelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { userId, isTyping: val.length > 0 }
+      });
+      lastTypingBroadcast.current = now;
+    }
+    
+    // Immediate clear if text becomes empty
+    if (val.length === 0 && chatChannelRef.current) {
+      chatChannelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { userId, isTyping: false }
+      });
     }
   };
 
@@ -294,11 +380,29 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Typing Indicators */}
+            {Object.keys(typingUsers).filter(id => id !== userId).length > 0 && (
+              <div className="px-4 pb-2 pt-1 flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] sm:text-xs text-slate-400 italic">
+                  {Object.keys(typingUsers).filter(id => id !== userId).map(id => {
+                    if (id === 'gemini') return 'Gemini Bot ✨';
+                    const user = onlineUsers.find(u => u.id === id);
+                    return user?.username || 'Someone';
+                  }).join(", ")} {Object.keys(typingUsers).filter(id => id !== userId).length > 1 ? 'are' : 'is'} typing
+                </span>
+                <span className="flex gap-0.5 ml-1">
+                  <span className="w-1.5 h-1.5 bg-cyan-500/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 bg-cyan-500/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 bg-cyan-500/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                </span>
+              </div>
+            )}
+
             {/* Input Bar */}
             <div className="border-t border-slate-800/30 bg-slate-900/60 px-3 sm:px-4 py-2.5 flex items-center gap-2">
               <Input
                 value={text}
-                onChange={(event) => setText(event.target.value)}
+                onChange={handleTextChange}
                 placeholder={`${t("Message")} #${activeRoom}...`}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") void sendMessage();
