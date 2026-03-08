@@ -9,8 +9,7 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 
 // CRITICAL: react-player MUST be loaded client-side only. 
 // SSR breaks the YouTube IFrame API initialization.
-// @ts-ignore
-const ReactPlayer = dynamic(() => import("react-player/youtube"), { ssr: false }) as any;
+const ReactPlayer = dynamic(() => import("react-player"), { ssr: false }) as any;
 
 export function GlobalPlayer() {
   const { t } = useTranslation();
