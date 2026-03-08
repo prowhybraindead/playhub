@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { FantasyCoWriter } from "@/components/fantasy/fantasy-cowriter";
 
 type Universe = "starwars" | "got" | "lotr" | "dune";
 
@@ -94,19 +95,25 @@ export function FantasyExplorer() {
           ))}
         </div>
       </div>
-      <Card className="sticky top-24 h-fit">
-        <CardHeader>
-          <CardTitle>{selected?.title ?? "Detail"}</CardTitle>
-          <CardDescription>{selected?.subtitle}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">{selected?.description ?? "Chọn một nhân vật để xem chi tiết."}</p>
-          {selected?.extra ? <p className="rounded-lg border border-border bg-background/60 p-3 text-xs text-muted-foreground">{selected.extra}</p> : null}
-          {selected?.quote ? (
-            <p className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm text-cyan-100">{selected.quote}</p>
-          ) : null}
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Card className="sticky top-24 h-fit glass-card">
+          <CardHeader>
+            <CardTitle>{selected?.title ?? "Detail"}</CardTitle>
+            <CardDescription>{selected?.subtitle}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">{selected?.description ?? "Chọn một nhân vật để xem chi tiết."}</p>
+            {selected?.extra ? <p className="rounded-lg border border-border bg-background/60 p-3 text-xs text-muted-foreground">{selected.extra}</p> : null}
+            {selected?.quote ? (
+              <p className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm text-cyan-100">{selected.quote}</p>
+            ) : null}
+          </CardContent>
+        </Card>
+        
+        <div className="sticky top-[450px]">
+           <FantasyCoWriter universe={universe} />
+        </div>
+      </div>
     </div>
   );
 }

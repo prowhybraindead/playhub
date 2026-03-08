@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Providers } from "@/components/providers";
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { PageTransition } from "@/components/ui/page-transition";
+import { GlobalPlayer } from "@/components/layout/global-player";
 
 export const metadata: Metadata = {
   title: "Dolphin Playhub",
@@ -17,9 +18,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Providers>
           <I18nProvider>
             <Sidebar />
-            <main className="min-h-screen md:ml-72">
+            <main className="min-h-screen md:ml-72 pb-[100px]">
               <PageTransition>{children}</PageTransition>
             </main>
+            <GlobalPlayer />
           </I18nProvider>
         </Providers>
       </body>

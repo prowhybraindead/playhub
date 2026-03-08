@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Waves, Globe, ChevronDown } from "lucide-react";
 import { MobileSidebar } from "@/components/layout/mobile-sidebar";
+import { CommandPalette } from "@/components/layout/command-palette";
 import { useTranslation, Locale } from "@/components/providers/i18n-provider";
 
 const LABELS: Record<Locale, string> = {
@@ -31,7 +32,7 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 px-4 py-4 backdrop-blur md:px-8">
+    <header className="glass-panel-heavy px-4 py-4 md:px-8 border-b-0 sticky top-0 z-20">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
         <div className="flex items-center gap-3">
           <MobileSidebar />
@@ -76,10 +77,7 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
             )}
           </div>
           
-          <div className="hidden items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-sm text-cyan-100 md:flex">
-            <Waves className="h-4 w-4" />
-            <span>{t("Your personal ocean of fun")}</span>
-          </div>
+          <CommandPalette />
         </div>
       </div>
     </header>

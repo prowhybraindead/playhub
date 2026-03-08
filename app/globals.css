@@ -26,14 +26,42 @@
 }
 
 body {
-  @apply bg-background text-foreground antialiased;
-  background-image:
-    radial-gradient(circle at 20% 10%, rgba(0, 224, 255, 0.2), transparent 25%),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(168, 85, 247, 0.18),
-      transparent 30%
-    );
+  @apply bg-background text-foreground antialiased min-h-screen relative overflow-x-hidden;
+  background-attachment: fixed;
+}
+
+/* Dynamic Ambient Background Elements */
+body::before,
+body::after {
+  content: "";
+  position: absolute;
+  width: 60vw;
+  height: 60vw;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: -1;
+  pointer-events: none;
+  animation: floatBackground 20s infinite alternate ease-in-out;
+}
+
+body::before {
+  top: -10%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(0, 224, 255, 0.15) 0%, transparent 60%);
+}
+
+body::after {
+  bottom: -20%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 60%);
+  animation-delay: -10s;
+  animation-duration: 25s;
+}
+
+@keyframes floatBackground {
+  0% { transform: scale(0.8) translate(0, 0); }
+  50% { transform: scale(1.1) translate(10%, 5%); }
+  100% { transform: scale(0.9) translate(-5%, -10%); }
 }
 
 @keyframes pulseGlow {
@@ -52,4 +80,17 @@ body {
 
 .ocean-glow {
   animation: pulseGlow 4s ease-in-out infinite;
+}
+
+/* Glass UI Utilities */
+.glass-panel {
+  @apply bg-card/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+}
+
+.glass-panel-heavy {
+  @apply bg-background/60 backdrop-blur-2xl border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)];
+}
+
+.glass-card {
+  @apply bg-card/30 backdrop-blur-lg border border-white/10 shadow-[0_4px_24px_0_rgba(0,0,0,0.2)] transition-all hover:bg-card/40 hover:border-white/20 hover:shadow-[0_8px_32px_0_rgba(0,224,255,0.15)];
 }

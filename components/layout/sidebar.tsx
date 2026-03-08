@@ -40,7 +40,7 @@ export async function Sidebar() {
   const plan = (subscription?.plan ?? "free") as SubscriptionPlan;
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border/60 bg-card/60 px-4 py-6 backdrop-blur md:flex md:flex-col">
+    <aside className="glass-panel-heavy fixed inset-y-0 left-0 z-30 hidden w-72 flex-col md:flex">
       <Link href="/dashboard" className="mb-6 flex items-center gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-950/40 p-3 shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] group">
         <div className="rounded-xl flex items-center justify-center p-1">
           <DolphinLogo className="h-8 w-8 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] group-hover:drop-shadow-[0_0_12px_rgba(34,211,238,1)] transition-all duration-300" />
