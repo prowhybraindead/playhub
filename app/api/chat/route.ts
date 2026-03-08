@@ -20,13 +20,42 @@ export async function POST(req: NextRequest) {
     // Quick instruction for Gemini
     const systemInstruction = "You are a friendly, helpful, and concise chat companion inside a live chat room on the platform Dolphin Playhub. Respond directly to the user's prompt in the language they used. Keep it relatively short and conversational (1-3 small paragraphs max). You love discussing anime, music, and art.";
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        systemInstruction,
+    const models = [
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-3.0-flash",
+      "gemini-3.1-flash-lite"
+    ];
+
+    let response;
+    let lastError;
+
+    for (const model of models) {
+      try {
+        response = await ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            systemInstruction,
+          }
+        });
+        
+        if (response) {
+          console.log(`[Chat Bot] Succeeded using model: ${model}`);
+          break;
+        }
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`[Chat Bot] Failed using ${model}. Error: ${error?.message || "Unknown error"}. Switching to fallback...`);
       }
-    });
+    }
+
+    if (!response) {
+       console.error("All Gemini chat models failed:", lastError);
+       throw lastError || new Error("All Gemini models failed for chat processing");
+    }
 
     const replyText = response.text || "Hello! I am Gemini. I couldn't process your request right now.";
 
