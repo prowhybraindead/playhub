@@ -43,14 +43,14 @@ export function MusicDetail({ track }: { track: MusicTrack | null }) {
 
   if (!track) {
     return (
-      <Card className="sticky top-24">
+      <Card className="sticky top-24 h-fit glass-card">
         <CardContent className="p-6 text-sm text-muted-foreground">{t("Select a song card to view details and lyrics.")}</CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="sticky top-24 overflow-hidden">
+    <Card className="sticky top-24 h-fit overflow-hidden glass-card">
       <div className="relative h-56 w-full">
         <Image
           src={track.strTrackThumb ?? "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200&auto=format&fit=crop"}
