@@ -4,7 +4,10 @@ import { useState, Suspense } from "react";
 import { HistoricalLeaderboard } from "@/components/f1/historical-leaderboard";
 import { F1AIAssistant } from "@/components/f1/f1-ai-assistant";
 
+import { useTranslation } from "@/components/providers/i18n-provider";
+
 export function F1DashboardClient() {
+  const { locale } = useTranslation();
   const [selectedRaceContext, setSelectedRaceContext] = useState<string>("");
 
   const handleRaceSelect = (raceName: string, year: string, round: string) => {
@@ -23,7 +26,7 @@ export function F1DashboardClient() {
       {/* Panel 2: AI Assistant */}
       <div className="h-[50vh] lg:h-full min-h-[350px]">
         <Suspense fallback={<div className="h-full w-full animate-pulse rounded-2xl bg-slate-800/50" />}>
-          <F1AIAssistant historicalContext={selectedRaceContext} />
+          <F1AIAssistant historicalContext={selectedRaceContext} currentLanguage={locale} />
         </Suspense>
       </div>
     </div>

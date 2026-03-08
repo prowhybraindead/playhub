@@ -3,7 +3,8 @@ import { env } from "@/lib/env";
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, context } = await req.json();
+    const { prompt, context, language } = await req.json();
+    const activeLanguage = language === "vi" ? "Vietnamese" : "English";
 
     if (!prompt) {
       return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
@@ -58,7 +59,7 @@ Your role:
 - Keep responses concise (2-4 sentences max) but impactful and informative.
 - Use racing terminology naturally.
 - If the user asks a specific question about a race, YOU MUST answer it accurately based ONLY on the factual data provided below. Do not guess or hallucinate statistics.
-- Respond in the same language the user writes in (Vietnamese or English).
+- IMPORTANT LANGUAGE INSTRUCTION: You MUST respond EXCLUSIVELY in ${activeLanguage}. Do not translate or mention the translation process, just output your final answer directly in ${activeLanguage}.
 - Include relevant emoji sparingly for visual flair (🏎️ 🏁 🔴 🟢 etc.)
 
 User's current view: 
@@ -70,9 +71,9 @@ ${explicitRaceData}`;
     // OpenRouter supports passing an array of models for automatic fallback starting with the first
     // Note: OpenRouter API limits this array to a maximum of 3 items.
     const fallbackModels = [
+      "z-ai/glm-4.5-air:free",
       "qwen/qwen3-next-80b-a3b-instruct:free",
-      "arcee-ai/trinity-large-preview:free",
-      "z-ai/glm-4.5-air:free"
+      "arcee-ai/trinity-large-preview:free"
     ];
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {

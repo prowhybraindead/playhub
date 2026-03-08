@@ -20,7 +20,7 @@ const AUTO_PROMPTS = [
   "What was the championship context going into this specific race weekend?",
 ];
 
-export function F1AIAssistant({ historicalContext }: { historicalContext?: string }) {
+export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { historicalContext?: string, currentLanguage?: string }) {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +69,8 @@ export function F1AIAssistant({ historicalContext }: { historicalContext?: strin
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          context: historicalContext || "General F1 Trivia and Historical Records."
+          context: historicalContext || "General F1 Trivia and Historical Records.",
+          language: currentLanguage
         }),
       });
 
@@ -232,7 +233,7 @@ export function F1AIAssistant({ historicalContext }: { historicalContext?: strin
             onKeyDown={handleKeyDown}
             placeholder="Ask about this race..."
             className="bg-slate-800/50 border-slate-700/30 text-white text-xs h-8 sm:h-9 placeholder:text-slate-600 rounded-lg focus-visible:ring-emerald-500/30"
-            disabled={isLoading}
+            // Do NOT disable the input while loading, so users can queue the next question
           />
           <Button
             size="sm"
