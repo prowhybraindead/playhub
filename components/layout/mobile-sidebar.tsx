@@ -13,6 +13,7 @@ const links = [
   { href: "/music", label: "Music" },
   { href: "/anime", label: "Anime & Manga" },
   { href: "/books", label: "Books" },
+  { href: "/f1", label: "Formula 1" },
   { href: "/fantasy", label: "Fantasy" },
   { href: "/art", label: "Art" },
   { href: "/chat", label: "Chat" },
