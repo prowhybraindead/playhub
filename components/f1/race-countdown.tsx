@@ -8,11 +8,10 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 
 export function RaceCountdown() {
   const { t } = useTranslation();
-  // Using Ergast API fallback or hardcoded next race if Ergast is deprecated
-  // For simplicity, we'll set a default next race: Bahrain / Australia 2026.
-  const nextRaceDate = new Date("2026-03-22T15:00:00Z"); 
-  const raceName = "Australian Grand Prix";
-  const location = "Melbourne, Australia";
+  // Upcoming race: Saudi Arabian Grand Prix 2026
+  const nextRaceDate = new Date("2026-03-22T17:00:00Z"); 
+  const raceName = "Saudi Arabian Grand Prix";
+  const location = "Jeddah, Saudi Arabia";
 
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -26,7 +25,8 @@ export function RaceCountdown() {
       const now = new Date().getTime();
       const distance = nextRaceDate.getTime() - now;
 
-      if (distance < 0) {
+      if (distance <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         clearInterval(timer);
         return;
       }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import Hls from "hls.js";
+import * as dashjs from "dashjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,34 +31,44 @@ export function LiveBroadcast() {
   }, [streamUrl]);
 
   useEffect(() => {
-    let hls: Hls;
+    let hls: Hls | null = null;
+    let dashPlayer: dashjs.MediaPlayerClass | null = null;
 
     if (videoRef.current && playableUrl) {
-      if (playableUrl.includes(".m3u8") && Hls.isSupported()) {
-        hls = new Hls({
-          maxBufferLength: 30,
-          maxMaxBufferLength: 60,
-        });
-        hls.loadSource(playableUrl);
-        hls.attachMedia(videoRef.current);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (isPlaying) videoRef.current?.play();
+      if (playableUrl.includes(".m3u8")) {
+        if (Hls.isSupported()) {
+          hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
+          hls.loadSource(playableUrl);
+          hls.attachMedia(videoRef.current);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (isPlaying) videoRef.current?.play();
+          });
+        } else {
+          videoRef.current.src = playableUrl;
+        }
+      } else if (playableUrl.includes(".mpd")) {
+        // Init Dash.js for TV360 MPEG-DASH standard
+        dashPlayer = dashjs.MediaPlayer().create();
+        dashPlayer.initialize(videoRef.current, playableUrl, isPlaying);
+        
+        // Suppress dash.js verbose logs in production if desired
+        dashPlayer.updateSettings({
+          debug: { logLevel: dashjs.Debug.LOG_LEVEL_NONE }
         });
       } else {
-        // Fallback for native Safari HLS, MP4s, or local AceStream HTTP proxy streams which are typically MPEG-TS
+        // Fallback for MP4s or local AceStream HTTP proxy streams (MPEG-TS)
         videoRef.current.src = playableUrl;
         videoRef.current.addEventListener("loadedmetadata", () => {
-          if (isPlaying) videoRef.current?.play();
-        });
+          if (isPlaying) videoRef.current?.play().catch(e => console.log("Auto-play prevented", e));
+        }, { once: true });
       }
     }
 
     return () => {
-      if (hls) {
-        hls.destroy();
-      }
+      if (hls) hls.destroy();
+      if (dashPlayer) dashPlayer.reset();
     };
-  }, [playableUrl, isPlaying]);
+  }, [playableUrl]);
 
   const handlePlay = () => {
     if (videoRef.current && playableUrl) {
@@ -78,9 +89,10 @@ export function LiveBroadcast() {
                 <TooltipTrigger asChild>
                   <Info className="h-4 w-4 text-slate-500 cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs bg-slate-900 border-slate-700 text-slate-200">
-                  <p>Paste an <b>M3U8</b> link or MP4 URL for a pure web streaming experience.</p>
-                  <p className="mt-2 text-xs text-slate-400">If you use an <b>AceStream ID</b>, you must have the Ace Stream app running locally on your device (P2P protocol limitation).</p>
+                <TooltipContent className="max-w-xs bg-slate-900 border-slate-700 text-slate-200 z-50">
+                  <p>Paste an <b>M3U8</b> link, <b>.MPD</b> (DASH) link, or MP4 URL.</p>
+                  <p className="mt-2 text-xs text-slate-400">- E.g. search Google: <i>"Sky Sports F1 m3u8 github url"</i> to find free pure web streams without AceStream.</p>
+                  <p className="mt-1 text-xs text-rose-500 font-medium">Or paste an AceStream ID if you have the PC app running.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
