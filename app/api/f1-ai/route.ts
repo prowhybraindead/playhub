@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,31 +9,99 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
     }
 
+    // 1. Attempt to parse Year and Round from the context string
+    // e.g., "Analyzing race: 2024 Chinese Grand Prix (Round 5)"
+    let explicitRaceData = "";
+    try {
+      if (context && context.includes("Analyzing race:")) {
+        const yearMatch = context.match(/(\d{4})/);
+        const roundMatch = context.match(/Round (\d+)/);
+        if (yearMatch && roundMatch) {
+          const year = yearMatch[1];
+          const round = roundMatch[1];
+          
+          // Fetch exact factual data from Jolpi/Ergast
+          const f1Res = await fetch(`https://api.jolpi.ca/ergast/f1/${year}/${round}/results.json`);
+          if (f1Res.ok) {
+            const f1Data = await f1Res.json();
+            const raceDetails = f1Data.MRData?.RaceTable?.Races?.[0];
+            if (raceDetails) {
+              // Simplify the data payload so the AI doesn't choke on token limits
+              const simplifiedResults = raceDetails.Results?.map((r: any) => ({
+                pos: r.position,
+                driver: `${r.Driver.givenName} ${r.Driver.familyName}`,
+                team: r.Constructor.name,
+                points: r.points,
+                status: r.status,
+                grid: r.grid
+              }));
+              
+              explicitRaceData = `
+FACTUAL DATA OVERRIDE - YOU MUST USE THIS DATA TO ANSWER QUESTIONS:
+Race: ${raceDetails.season} ${raceDetails.raceName}
+Circuit: ${raceDetails.Circuit.circuitName}
+Official Results (Top 10+):
+${JSON.stringify(simplifiedResults?.slice(0, 15), null, 2)}
+              `;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch grounding F1 data", e);
+    }
+
     const systemInstruction = `You are an expert Formula 1 race commentator and analyst AI embedded in a live F1 dashboard application called "Dolphin Playhub". 
 
 Your role:
-- You have access to Google Search. You MUST search the web for the latest real-world Formula 1 news, schedules, and live race updates to answer questions or provide commentary.
 - Provide insightful, exciting commentary in the style of a professional F1 broadcast.
 - Keep responses concise (2-4 sentences max) but impactful and informative.
 - Use racing terminology naturally.
-- If the user asks a specific question, answer it directly and accurately.
+- If the user asks a specific question about a race, YOU MUST answer it accurately based ONLY on the factual data provided below. Do not guess or hallucinate statistics.
 - Respond in the same language the user writes in (Vietnamese or English).
 - Include relevant emoji sparingly for visual flair (🏎️ 🏁 🔴 🟢 etc.)
 
-Current Real-time Context:
-${context || "No live race data available currently."}`;
+User's current view: 
+${context || "No specific race selected."}
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: String(prompt),
-      config: {
-        systemInstruction: systemInstruction,
+${explicitRaceData}`;
+
+    // Priority list of models requested by the user
+    // OpenRouter supports passing an array of models for automatic fallback starting with the first
+    const fallbackModels = [
+      "qwen/qwen3-next-80b-a3b-instruct:free",
+      "arcee-ai/trinity-large-preview:free",
+      "z-ai/glm-4.5-air:free",
+      "google/gemini-2.5-flash:free", // Safety fallback
+      "qwen/qwen-2.5-72b-instruct:free" // Extra free safety net
+    ];
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": env.NEXT_PUBLIC_APP_URL, // Optional, for including your app on openrouter.ai rankings.
+        "X-Title": "Dolphin Playhub", // Optional. Shows in rankings on openrouter.ai.
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        models: fallbackModels, 
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: prompt }
+        ],
         temperature: 0.7,
-        tools: [{ googleSearch: {} }],
-      }
+      })
     });
 
-    const aiMessage = response.text || "No response from AI.";
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenRouter API Error:", errorText);
+      return NextResponse.json({ error: "API Error", details: errorText }, { status: response.status });
+    }
+
+    const data = await response.json();
+    const aiMessage = data.choices?.[0]?.message?.content || "No response from AI.";
 
     return NextResponse.json({ message: aiMessage });
   } catch (error: any) {
