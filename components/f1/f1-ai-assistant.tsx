@@ -79,7 +79,7 @@ export function F1AIAssistant() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          context: "Australian Grand Prix 2026 - Race completed. P1: Russell (Mercedes), P2: Antonelli (Mercedes), P3: Leclerc (Ferrari). Notable: Verstappen P6 with 14 pit stops strategy, Piastri and Hulkenberg retired."
+          context: "Use Google Search to find the latest real-time F1 race information."
         }),
       });
 
