@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Bot, User, Play, Sparkles } from "lucide-react";
+import { Send, Bot, User, Play, Sparkles, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AIMessage {
   id: string;
@@ -23,6 +24,7 @@ const AUTO_PROMPTS = [
 export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { historicalContext?: string, currentLanguage?: string }) {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState("");
+  const [aiLanguage, setAiLanguage] = useState(currentLanguage);
   const [isLoading, setIsLoading] = useState(false);
   const [autoPilot, setAutoPilot] = useState(false);
   const [autoIndex, setAutoIndex] = useState(0);
@@ -70,7 +72,7 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
         body: JSON.stringify({
           prompt,
           context: historicalContext || "General F1 Trivia and Historical Records.",
-          language: currentLanguage
+          language: aiLanguage
         }),
       });
 
@@ -153,7 +155,21 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
               F1 Archives AI
             </CardTitle>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Select value={aiLanguage} onValueChange={setAiLanguage}>
+              <SelectTrigger className="w-[105px] h-6 sm:h-7 bg-slate-800/80 border-slate-700/50 text-white text-[10px] sm:text-[11px] rounded-md focus:ring-emerald-500/50">
+                <Globe className="w-3 h-3 mr-1.5 text-emerald-400 hidden sm:block" />
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="vi" className="text-[10px] sm:text-[11px] text-white">Tiếng Việt 🇻🇳</SelectItem>
+                <SelectItem value="en" className="text-[10px] sm:text-[11px] text-white">English 🇬🇧</SelectItem>
+                <SelectItem value="ja" className="text-[10px] sm:text-[11px] text-white">日本語 🇯🇵</SelectItem>
+                <SelectItem value="ko" className="text-[10px] sm:text-[11px] text-white">한국어 🇰🇷</SelectItem>
+                <SelectItem value="zh" className="text-[10px] sm:text-[11px] text-white">中文 🇨🇳</SelectItem>
+              </SelectContent>
+            </Select>
+
             {autoPilot ? (
               <span className="flex items-center gap-1 text-[9px] sm:text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5">
                 <Play className="w-2.5 h-2.5" /> Auto

@@ -6,6 +6,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { DolphinLogo } from "@/components/ui/dolphin-logo";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -30,7 +31,7 @@ export function MobileSidebar() {
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogTitle className="flex items-center gap-3 border-b border-border/50 pb-4">
-          <img src="/dolphin-logo.png" alt="Dolphin Logo" className="h-8 w-8 object-contain drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+          <DolphinLogo className="h-8 w-8 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
           <span className="font-bold text-lg tracking-wide bg-gradient-to-r from-cyan-300 to-blue-500 bg-clip-text text-transparent drop-shadow-sm">Dolphin Playhub</span>
         </DialogTitle>
         <nav className="mt-2 space-y-2">
