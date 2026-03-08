@@ -6,7 +6,8 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_THEAUDIODB_API_KEY: z.string().default("2"),
-  GEMINI_API_KEY: z.string().optional()
+  GEMINI_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional()
 });
 
 export const env = envSchema.parse({
@@ -15,5 +16,6 @@ export const env = envSchema.parse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   NEXT_PUBLIC_THEAUDIODB_API_KEY: process.env.NEXT_PUBLIC_THEAUDIODB_API_KEY,
-  GEMINI_API_KEY: process.env.GEMINI_API_KEY
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY
 });

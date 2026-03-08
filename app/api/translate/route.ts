@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { env } from "@/lib/env";
 import { createClient } from "@/lib/supabase";
 
@@ -11,9 +10,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    if (!env.GEMINI_API_KEY) {
+    if (!env.OPENROUTER_API_KEY) {
       // If no API key is set, log and return original texts
-      console.warn("GEMINI_API_KEY is not set. Returning original texts.");
+      console.warn("OPENROUTER_API_KEY is not set. Returning original texts.");
       return NextResponse.json({ translations: texts });
     }
 
@@ -59,11 +58,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ translations: finalTranslations });
     }
 
-    console.log(`[i18n] Cache hit for ${texts.length - missingTexts.length}, fetching ${missingTexts.length} from AI`);
+    console.log(`[i18n] Cache hit for ${texts.length - missingTexts.length}, fetching ${missingTexts.length} from OpenRouter Nemotron`);
 
-    // Step 2: Fetch missing from AI
-    const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-    
+    // Step 2: Fetch missing from OpenRouter (Nemotron)
     const prompt = `Translate the following JSON array of strings exactly into exactly ${targetLanguage}. 
 Maintain the structure and do not translate technical terms, UI variables enclosed in brackets or Markdown formatting.
 Strings to translate:
@@ -71,44 +68,44 @@ ${JSON.stringify(missingTexts)}
 
 Respond ONLY with a valid JSON array of strings matching the input length.`;
 
-    const models = [
-      "gemini-2.5-flash",
-      "gemini-2.5-flash-lite",
-      "gemini-2.0-flash-lite",
-      "gemini-3.1-flash-lite",
-    ];
-
-    let response;
-    let lastError;
-
-    for (const model of models) {
-      try {
-        response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json"
+    const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "messages": [
+          {
+            "role": "user",
+            "content": prompt
           }
-        });
-        
-        // If successful, break out of loop
-        if (response) {
-          console.log(`Translation succeeded using model: ${model}`);
-          break;
-        }
-      } catch (error: any) {
-        lastError = error;
-        // Specifically look for rate limits (429) or other API errors
-        console.warn(`Translation failed using ${model}. Error: ${error?.message || "Unknown error"}. Switching to fallback...`);
-      }
+        ]
+      })
+    });
+
+    if (!openRouterRes.ok) {
+      throw new Error(`OpenRouter API failed: ${openRouterRes.statusText}`);
     }
 
-    if (!response) {
-      throw lastError || new Error("All Gemini models failed for translation");
+    const openRouterData = await openRouterRes.json();
+    let outputText = openRouterData.choices?.[0]?.message?.content || "[]";
+    
+    // Sometimes models wrap JSON in markdown blocks like ```json ... ```
+    if (outputText.startsWith("\`\`\`json")) {
+       outputText = outputText.replace(/^\`\`\`json\s*/, "").replace(/\s*\`\`\`$/, "");
+    } else if (outputText.startsWith("\`\`\`")) {
+       outputText = outputText.replace(/^\`\`\`\s*/, "").replace(/\s*\`\`\`$/, "");
     }
 
-    const outputText = response.text || "[]";
-    const translatedMissingTexts = JSON.parse(outputText);
+    let translatedMissingTexts;
+    try {
+      translatedMissingTexts = JSON.parse(outputText);
+    } catch (parseError) {
+      console.error("Failed to parse OpenRouter response:", outputText);
+      throw new Error("Translation output mismatch (Invalid JSON)");
+    }
 
     if (!Array.isArray(translatedMissingTexts) || translatedMissingTexts.length !== missingTexts.length) {
       throw new Error("Translation output mismatch");

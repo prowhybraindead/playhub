@@ -40,7 +40,7 @@ create table if not exists public.transactions (
 drop table if exists public.chat_messages cascade;
 create table if not exists public.chat_messages (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
   room_id text not null default 'global',
   message text not null check (char_length(message) between 1 and 1000),
   created_at timestamptz not null default now()
@@ -173,11 +173,11 @@ on public.chat_messages for select
 to authenticated
 using (true);
 
-drop policy if exists "chat_messages_insert_own" on public.chat_messages;
-create policy "chat_messages_insert_own"
+drop policy if exists "chat_messages_insert_own_or_bot" on public.chat_messages;
+create policy "chat_messages_insert_own_or_bot"
 on public.chat_messages for insert
 to authenticated
-with check (auth.uid() = user_id);
+with check (user_id is null or auth.uid() = user_id);
 
 alter table public.i18n_translations enable row level security;
 

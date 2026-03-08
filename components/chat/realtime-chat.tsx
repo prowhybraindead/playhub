@@ -159,6 +159,19 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
     
     // Swap temp id with real id
     setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, id: data.id } : m));
+
+    // Handle @gemini command
+    if (messageText.toLowerCase().startsWith("@gemini")) {
+      const prompt = messageText.substring(7).trim();
+      if (prompt) {
+        // We don't await this, let it process in the background
+        fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ room_id: activeRoom, prompt })
+        }).catch(err => console.error("Failed to trigger gemini chat", err));
+      }
+    }
   };
 
   return (
@@ -178,18 +191,28 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
         </CardHeader>
         <CardContent className="flex h-[calc(70vh-100px)] flex-col">
           <div className="mb-3 flex-1 space-y-3 overflow-auto pr-2">
-            {messages.map((message) => (
+            {messages.map((message) => {
+              const isGemini = message.user_id === null;
+              return (
               <div key={message.id} className="flex gap-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={message.profile?.avatar_url ?? undefined} />
-                  <AvatarFallback>{(message.profile?.username?.[0] ?? "U").toUpperCase()}</AvatarFallback>
+                  {isGemini ? (
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold">✨</AvatarFallback>
+                  ) : (
+                    <>
+                      <AvatarImage src={message.profile?.avatar_url ?? undefined} />
+                      <AvatarFallback>{(message.profile?.username?.[0] ?? "U").toUpperCase()}</AvatarFallback>
+                    </>
+                  )}
                 </Avatar>
                 <div className="rounded-xl border border-border bg-background/60 px-3 py-2">
-                  <p className="text-xs text-cyan-200">{message.profile?.username ?? t("Unknown")}</p>
+                  <p className={`text-xs ${isGemini ? "text-purple-400 font-semibold" : "text-cyan-200"}`}>
+                    {isGemini ? "Gemini Bot" : (message.profile?.username ?? t("Unknown"))}
+                  </p>
                   <p className="text-sm text-foreground">{message.message}</p>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
           <div className="flex items-center gap-2">
             <Input
