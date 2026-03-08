@@ -14,45 +14,41 @@ interface AIMessage {
 }
 
 const AUTO_PROMPTS = [
-  "Summarize the current state of the Australian Grand Prix 2026. Who is leading? Any notable incidents?",
-  "What's the latest strategy play in the F1 race? Any interesting pit stop decisions?",
-  "Give a quick update on the battle for the podium positions in the current F1 race.",
-  "What are the key highlights and turning points of the race so far?",
-  "Any driver retirements or penalties? What happened?",
+  "Give a brief, dramatic summary of what happened in this specific historical race.",
+  "Were there any major rivalries, crashes, or surprising strategic choices in this race?",
+  "Who was the Driver of the Day, and who had the biggest disappointment in this event?",
+  "What was the championship context going into this specific race weekend?",
 ];
 
-export function F1AIAssistant() {
+export function F1AIAssistant({ historicalContext }: { historicalContext?: string }) {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [autoPilot, setAutoPilot] = useState(true);
-  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [autoPilot, setAutoPilot] = useState(false);
   const [autoIndex, setAutoIndex] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // We rely strictly on the historicalContext from the wrapper
+  // Reset chat when race context changes
+  useEffect(() => {
+    if (historicalContext && historicalContext.includes("Analyzing")) {
+      setMessages([
+        {
+           id: "sys_1",
+           role: "assistant",
+           content: `🏎️ Context shifted: ${historicalContext.split(":")[1]}. Ready to answer historical stats!`,
+           timestamp: new Date()
+        }
+      ]);
+      // Re-enable autopilot with fresh context
+      setAutoPilot(true);
+      setAutoIndex(0);
+    }
+  }, [historicalContext]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Check if cooldown has expired and re-enable autopilot
-  useEffect(() => {
-    if (cooldownUntil) {
-      const remaining = cooldownUntil - Date.now();
-      if (remaining <= 0) {
-        setAutoPilot(true);
-        setCooldownUntil(null);
-        return;
-      }
-      cooldownTimerRef.current = setTimeout(() => {
-        setAutoPilot(true);
-        setCooldownUntil(null);
-      }, remaining);
-      return () => {
-        if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
-      };
-    }
-  }, [cooldownUntil]);
 
   const sendToAI = useCallback(async (prompt: string, isAutomatic: boolean) => {
     if (isLoading) return;
@@ -67,10 +63,6 @@ export function F1AIAssistant() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, userMsg]);
-
-      // Pause autopilot for 3 minutes
-      setAutoPilot(false);
-      setCooldownUntil(Date.now() + 3 * 60 * 1000);
     }
 
     try {
@@ -79,7 +71,7 @@ export function F1AIAssistant() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          context: "Use Google Search to find the latest real-time F1 race information."
+          context: historicalContext || "General F1 Trivia and Historical Records."
         }),
       });
 
@@ -112,9 +104,9 @@ export function F1AIAssistant() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, historicalContext]);
 
-  // Auto-pilot: send a prompt every 2 minutes
+  // Auto-pilot: send a prompt occasionally to discuss history
   useEffect(() => {
     if (!autoPilot) return;
 
@@ -129,7 +121,7 @@ export function F1AIAssistant() {
       const prompt = AUTO_PROMPTS[autoIndex % AUTO_PROMPTS.length];
       sendToAI(prompt, true);
       setAutoIndex((prev) => prev + 1);
-    }, 120000); // Every 2 minutes
+    }, 60000); // Every 1 minute for history tour
 
     return () => {
       clearTimeout(initialTimeout);
@@ -139,6 +131,7 @@ export function F1AIAssistant() {
 
   const handleSend = () => {
     if (!input.trim() || isLoading) return;
+    setAutoPilot(false); // Disable auto-pilot once user interacts
     sendToAI(input.trim(), false);
     setInput("");
   };
@@ -150,23 +143,21 @@ export function F1AIAssistant() {
     }
   };
 
-  const remainingCooldown = cooldownUntil ? Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000)) : 0;
-
   return (
     <Card className="bg-slate-900/70 border-slate-700/50 backdrop-blur-sm h-full flex flex-col">
       <CardHeader className="pb-2 pt-3 px-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-            🤖 F1 AI Analyst
+            🤖 F1 Archives AI
           </CardTitle>
           <div className="flex items-center gap-2">
             {autoPilot ? (
-              <span className="flex items-center gap-1 text-[10px] text-emerald-400">
-                <Play className="w-3 h-3" /> Auto
+              <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
+                <Play className="w-3 h-3" /> Auto-Review
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-[10px] text-amber-400">
-                <Pause className="w-3 h-3" /> Paused {remainingCooldown > 0 ? `(${Math.floor(remainingCooldown / 60)}:${String(remainingCooldown % 60).padStart(2, "0")})` : ""}
+               <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+               Paused (User Input)
               </span>
             )}
           </div>
@@ -179,7 +170,7 @@ export function F1AIAssistant() {
             <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs text-center p-4">
               <Bot className="w-8 h-8 mb-2 opacity-30" />
               <p>AI Analyst is warming up...</p>
-              <p className="text-[10px] mt-1">Auto-commentary will begin shortly. Or ask a question below!</p>
+              <p className="text-[10px] mt-1">Select a historical race to begin!</p>
             </div>
           )}
           {messages.map((msg) => (
@@ -234,7 +225,7 @@ export function F1AIAssistant() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Hỏi AI về F1..."
+            placeholder="Hỏi AI về chặng đua này..."
             className="bg-slate-800/60 border-slate-700/50 text-white text-xs h-8 placeholder:text-slate-500"
             disabled={isLoading}
           />
