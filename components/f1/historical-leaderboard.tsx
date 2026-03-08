@@ -84,6 +84,7 @@ const teamColors: Record<string, string> = {
   "Alfa Romeo": "#C92D4B",
   "Racing Point": "#F596C8",
   "Renault": "#FFF500",
+  "Cadillac F1 Team": "#D4AF37", // Gold/Black for Cadillac
 };
 
 const teamLogoUrls: Record<string, string> = {
@@ -101,6 +102,7 @@ const teamLogoUrls: Record<string, string> = {
   "Alfa Romeo": "https://logo.clearbit.com/sauber-group.com",
   "Racing Point": "https://logo.clearbit.com/astonmartinf1.com",
   "Renault": "https://logo.clearbit.com/renaultgroup.com",
+  "Cadillac F1 Team": "https://logo.clearbit.com/cadillac.com",
 };
 
 const podiumEmojis: Record<string, string> = { "1": "🥇", "2": "🥈", "3": "🥉" };
