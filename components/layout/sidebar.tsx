@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { BookOpenText, Brush, Crown, LogOut, MessageCircle, Music, Sparkles, Stars, TvMinimalPlay, UserCircle2, Waves } from "lucide-react";
+import { BookOpenText, Brush, Crown, LogOut, MessageCircle, Music, Sparkles, Stars, TvMinimalPlay, UserCircle2, Waves, Flag } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/music", label: "Music", icon: Music },
   { href: "/anime", label: "Anime & Manga", icon: TvMinimalPlay },
   { href: "/books", label: "Books", icon: BookOpenText },
+  { href: "/f1", label: "Formula 1", icon: Flag },
   { href: "/fantasy", label: "Fantasy Universe", icon: Stars },
   { href: "/art", label: "Art & Images", icon: Brush },
   { href: "/dashboard", label: "Random Fun", icon: Sparkles },

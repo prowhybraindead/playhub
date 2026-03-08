@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -36,6 +36,15 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
   const [text, setText] = useState("");
   const [activeRoom, setActiveRoom] = useState(ROOM_OPTIONS.includes(initialRoom) ? initialRoom : "global");
   const [onlineUsers, setOnlineUsers] = useState<OnlineProfile[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     const load = async () => {
@@ -213,6 +222,7 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
                 </div>
               </div>
             )})}
+            <div ref={messagesEndRef} />
           </div>
           <div className="flex items-center gap-2">
             <Input
