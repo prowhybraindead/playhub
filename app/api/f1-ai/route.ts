@@ -72,7 +72,7 @@ ${explicitRaceData}`;
     // Note: OpenRouter API limits this array to a maximum of 3 items.
     const fallbackModels = [
       "z-ai/glm-4.5-air:free",
-      "qwen/qwen3-next-80b-a3b-instruct:free",
+      "openai/gpt-oss-120b:free",
       "arcee-ai/trinity-large-preview:free"
     ];
 
