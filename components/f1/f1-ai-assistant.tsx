@@ -27,8 +27,21 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
   const [aiLanguage, setAiLanguage] = useState(currentLanguage);
   const [isLoading, setIsLoading] = useState(false);
   const [autoPilot, setAutoPilot] = useState(false);
-  const [autoIndex, setAutoIndex] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Stable refs to prevent infinite dependency loops
+  const isLoadingRef = useRef(false);
+  const autoIndexRef = useRef(0);
+  const aiLangRef = useRef(aiLanguage);
+  const contextRef = useRef(historicalContext);
+
+  useEffect(() => {
+    aiLangRef.current = aiLanguage;
+  }, [aiLanguage]);
+
+  useEffect(() => {
+    contextRef.current = historicalContext;
+  }, [historicalContext]);
 
   // Reset chat when race context changes
   useEffect(() => {
@@ -43,16 +56,17 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
         }
       ]);
       setAutoPilot(true);
-      setAutoIndex(0);
+      autoIndexRef.current = 0; // Reset index
     }
   }, [historicalContext]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const sendToAI = useCallback(async (prompt: string, isAutomatic: boolean) => {
-    if (isLoading) return;
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
     setIsLoading(true);
 
     if (!isAutomatic) {
@@ -71,8 +85,8 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          context: historicalContext || "General F1 Trivia and Historical Records.",
-          language: aiLanguage
+          context: contextRef.current || "General F1 Trivia and Historical Records.",
+          language: aiLangRef.current
         }),
       });
 
@@ -86,48 +100,49 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
         };
         setMessages((prev) => [...prev, aiMsg]);
       } else {
-        const aiMsg: AIMessage = {
+        const errMsg: AIMessage = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "⚠️ Unable to fetch AI analysis at this moment. Will retry shortly.",
+          content: "⚠️ Unable to fetch AI analysis at this moment. Please try again.",
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, aiMsg]);
+        setMessages((prev) => [...prev, errMsg]);
       }
     } catch {
-      const aiMsg: AIMessage = {
+      const errMsg: AIMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "⚠️ Connection error. Will retry shortly.",
+        content: "⚠️ Connection error. Please try again.",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, aiMsg]);
+      setMessages((prev) => [...prev, errMsg]);
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
-  }, [isLoading, historicalContext]);
+  }, []);
 
   // Auto-pilot: send prompts periodically
   useEffect(() => {
     if (!autoPilot) return;
 
     const initialTimeout = setTimeout(() => {
-      const prompt = AUTO_PROMPTS[autoIndex % AUTO_PROMPTS.length];
+      const prompt = AUTO_PROMPTS[autoIndexRef.current % AUTO_PROMPTS.length];
       sendToAI(prompt, true);
-      setAutoIndex((prev) => prev + 1);
-    }, 5000);
+      autoIndexRef.current += 1;
+    }, 7000);
 
     const interval = setInterval(() => {
-      const prompt = AUTO_PROMPTS[autoIndex % AUTO_PROMPTS.length];
-      sendToAI(prompt, true);
-      setAutoIndex((prev) => prev + 1);
-    }, 60000);
+       const prompt = AUTO_PROMPTS[autoIndexRef.current % AUTO_PROMPTS.length];
+       sendToAI(prompt, true);
+       autoIndexRef.current += 1;
+    }, 45000);
 
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(interval);
     };
-  }, [autoPilot, autoIndex, sendToAI]);
+  }, [autoPilot, sendToAI]);
 
   const handleSend = () => {
     if (!input.trim() || isLoading) return;
