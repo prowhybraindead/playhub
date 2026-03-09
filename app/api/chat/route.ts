@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { env } from "@/lib/env";
 import { createServerClient } from "@supabase/ssr";
 
@@ -11,53 +10,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: "GEMINI_API_KEY is not configured" }, { status: 500 });
+    if (!env.OPENROUTER_API_KEY_2) {
+      return NextResponse.json({ error: "OPENROUTER_API_KEY_2 is not configured" }, { status: 500 });
     }
 
-    const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-    
-    // Quick instruction for Gemini
+    // Quick instruction for the AI
     const systemInstruction = "You are a friendly, helpful, and concise chat companion inside a live chat room on the platform Dolphin Playhub. Respond directly to the user's prompt in the language they used. Keep it relatively short and conversational (1-3 small paragraphs max). You love discussing Formula 1 racing, F1 telemetry, motorsports, as well as anime, music, and art. You have expert knowledge on F1.";
 
-    const models = [
-      "gemini-2.5-flash",
-      "gemini-2.5-flash-lite",
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-lite",
-      "gemini-3.0-flash",
-      "gemini-3.1-flash-lite"
-    ];
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.OPENROUTER_API_KEY_2}`,
+        "HTTP-Referer": env.NEXT_PUBLIC_APP_URL,
+        "X-Title": "Dolphin Playhub",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "z-ai/glm-4.5-air:free",
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+      })
+    });
 
-    let response;
-    let lastError;
-
-    for (const model of models) {
-      try {
-        response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            systemInstruction,
-          }
-        });
-        
-        if (response) {
-          console.log(`[Chat Bot] Succeeded using model: ${model}`);
-          break;
-        }
-      } catch (error: any) {
-        lastError = error;
-        console.warn(`[Chat Bot] Failed using ${model}. Error: ${error?.message || "Unknown error"}. Switching to fallback...`);
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenRouter API Error:", errorText);
+      return NextResponse.json({ error: "API Error", details: errorText }, { status: response.status });
     }
 
-    if (!response) {
-       console.error("All Gemini chat models failed:", lastError);
-       throw lastError || new Error("All Gemini models failed for chat processing");
-    }
-
-    const replyText = response.text || "Hello! I am Gemini. I couldn't process your request right now.";
+    const data = await response.json();
+    const replyText = data.choices?.[0]?.message?.content || "Hello! I am your chat companion. I couldn't process your request right now.";
 
     // Create a service level client to bypass RLS for bot insertions
     let supabaseAdmin;

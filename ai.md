@@ -31,9 +31,9 @@ Dolphin Playhub heavily relies on LLMs for core functionality:
    - Also driven by OpenRouter.
    - Possesses a background auto-pilot mode for commentary and an interactive chat mode grounded strictly in Formula 1 context.
 
-3. **Gemini Realtime Chat (`/api/chat`)**:
-   - Integrated with `@google/genai` using the `gemini-2.5-flash` model.
-   - Activated in the Global Chat when users type `@gemini`.
+3. **OpenRouter Realtime Chat (`/api/chat`)**:
+   - Integrated with OpenRouter using the `z-ai/glm-4.5-air:free` model.
+   - Activated in the Global Chat when users type `@ai`.
    - Supports Realtime Broadcasting (Typing Indicators) via Supabase Channels.
 
 ## Data & External APIs

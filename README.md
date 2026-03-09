@@ -65,8 +65,8 @@ You must fill in the following API keys for the app to function fully:
 
 - `NEXT_PUBLIC_SUPABASE_URL` & `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (Required for server-side cache inserts)
-- `OPENROUTER_API_KEY` (For i18n Translation and F1 Commentary)
-- `GEMINI_API_KEY` (For the Realtime Chatbot)
+- `OPENROUTER_API_KEY_1` & `OPENROUTER_API_KEY_2` (For i18n Translation, F1 Commentary, Fantasy Co-writer, and Realtime Chatbot)
+- `GEMINI_API_KEY` (Optional, previously used for chat)
 - `NEXT_PUBLIC_THEAUDIODB_API_KEY` (Defaults to "2" for dev test endpoints)
 
 **3. Database Schema:**

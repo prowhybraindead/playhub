@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    if (!env.OPENROUTER_API_KEY) {
+    if (!env.OPENROUTER_API_KEY_1) {
       // If no API key is set, log and return original texts
-      console.warn("OPENROUTER_API_KEY is not set. Returning original texts.");
+      console.warn("OPENROUTER_API_KEY_1 is not set. Returning original texts.");
       return NextResponse.json({ translations: texts });
     }
 
@@ -75,7 +75,7 @@ Respond ONLY with a valid JSON array of strings matching the input length.`;
       const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+          "Authorization": `Bearer ${env.OPENROUTER_API_KEY_1}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({

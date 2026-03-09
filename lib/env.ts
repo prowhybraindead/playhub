@@ -7,7 +7,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_THEAUDIODB_API_KEY: z.string().default("2"),
   GEMINI_API_KEY: z.string().optional(),
-  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY_1: z.string().optional(),
+  OPENROUTER_API_KEY_2: z.string().optional(),
   YOUTUBE_API_KEY: z.string().optional()
 });
 
@@ -18,6 +19,7 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   NEXT_PUBLIC_THEAUDIODB_API_KEY: process.env.NEXT_PUBLIC_THEAUDIODB_API_KEY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+  OPENROUTER_API_KEY_1: process.env.OPENROUTER_API_KEY_1,
+  OPENROUTER_API_KEY_2: process.env.OPENROUTER_API_KEY_2,
   YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY
 });

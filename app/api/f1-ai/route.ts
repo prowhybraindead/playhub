@@ -79,7 +79,7 @@ ${explicitRaceData}`;
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+        "Authorization": `Bearer ${env.OPENROUTER_API_KEY_1}`,
         "HTTP-Referer": env.NEXT_PUBLIC_APP_URL, // Optional, for including your app on openrouter.ai rankings.
         "X-Title": "Dolphin Playhub", // Optional. Shows in rankings on openrouter.ai.
         "Content-Type": "application/json"

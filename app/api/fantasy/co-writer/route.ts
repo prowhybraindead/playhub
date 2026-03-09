@@ -34,7 +34,7 @@ ${storyContext ? storyContext.slice(-1000) : "No previous context. This is the b
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+        "Authorization": `Bearer ${env.OPENROUTER_API_KEY_1}`,
         "HTTP-Referer": env.NEXT_PUBLIC_APP_URL,
         "X-Title": "Dolphin Playhub - Fantasy Co-writer",
         "Content-Type": "application/json"
