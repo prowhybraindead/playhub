@@ -27,10 +27,10 @@ Your personal ocean of fun. A premium, aesthetic dashboard built with Next.js 14
   - _Mechanism 1 (Auto-Pilot)_: Periodically broadcasts summarized race commentary.
   - _Mechanism 2 (Interactive)_: Users can chat directly with the AI specifically tuned for F1 domain knowledge.
 
-### 💬 Realtime Chat & Gemini Agent
+### 💬 Realtime Chat & AI Agent
 
 - **Supabase Realtime**: Live messaging with typing indicators for all online users.
-- **@gemini Integration**: Mention the bot in chat to trigger the Google Gemini AI for instant responsive answers directly within the public channel.
+- **@ai Integration**: Mention the bot in chat to trigger the OpenRouter AI for instant responsive answers directly within the public channel.
 
 ### 🎵 Music & Radio
 

@@ -156,7 +156,7 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
         // Clear typing indicator when user actually sends a message
         setTypingUsers((prev) => {
           const next = { ...prev };
-          delete next[inserted.user_id || "gemini"];
+          delete next[inserted.user_id || "ai"];
           return next;
         });
       })
@@ -225,25 +225,25 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
     
     setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, id: data.id } : m));
 
-    if (messageText.toLowerCase().startsWith("@gemini")) {
-      const prompt = messageText.substring(7).trim();
+    if (messageText.toLowerCase().startsWith("@ai")) {
+      const prompt = messageText.substring(3).trim();
       if (prompt) {
-        // Let everyone know Gemini is typing
+        // Let everyone know AI is typing
         if (chatChannelRef.current) {
           chatChannelRef.current.send({
             type: 'broadcast',
             event: 'typing',
-            payload: { userId: 'gemini', isTyping: true }
+            payload: { userId: 'ai', isTyping: true }
           });
         }
         // Local state as well
-        setTypingUsers(prev => ({ ...prev, 'gemini': Date.now() + 10000 })); // 10s timeout buffer
+        setTypingUsers(prev => ({ ...prev, 'ai': Date.now() + 10000 })); // 10s timeout buffer
         
         fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ room_id: activeRoom, prompt })
-        }).catch(err => console.error("Failed to trigger gemini chat", err));
+        }).catch(err => console.error("Failed to trigger ai chat", err));
       }
     }
   };
