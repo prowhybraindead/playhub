@@ -5,18 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarClock, MapPin, Loader2, Play, Square } from "lucide-react";
 import { useTranslation } from "@/components/providers/i18n-provider";
 
-type SessionType = "fp1" | "fp2" | "fp3" | "sq1" | "sq2" | "sq3" | "sprint" | "q1" | "q2" | "q3" | "race";
+type SessionType = "fp1" | "fp2" | "fp3" | "qualifying" | "sprint" | "race";
 type SessionStatus = "upcoming" | "live" | "finished";
 
 interface SessionInfo {
-  session_key: number;
-  session_name: string;
-  date_start: string;
-  date_end: string;
-  session_type: SessionType;
-  circuit_short_name: string;
-  country_name: string;
-  status?: SessionStatus;
+  name: string;
+  type: SessionType;
+  date: Date;
+  endDate?: Date;
+  circuit: string;
+  location: string;
+  country: string;
 }
 
 export function RaceCountdown() {
@@ -37,18 +36,20 @@ export function RaceCountdown() {
       try {
         setIsLoading(true);
         
-        // Get current/next session from OpenF1 API
-        const sessionsRes = await fetch("https://api.openf1.org/v1/sessions?session_key=latest");
-        if (sessionsRes.ok) {
-          const sessions = await sessionsRes.json();
-          if (sessions && sessions.length > 0) {
-            const currentSession = sessions[0];
+        // Get current season schedule from Ergast API
+        const response = await fetch("https://api.jolpi.ca/ergast/f1/current.json");
+        if (response.ok) {
+          const data = await response.json();
+          const races = data.MRData.RaceTable.Races;
+          
+          const currentSession = findCurrentOrNextSession(races);
+          if (currentSession) {
             setSessionInfo(currentSession);
             
-            // Check if session is currently live
+            // Determine session status
             const now = new Date();
-            const sessionStart = new Date(currentSession.date_start);
-            const sessionEnd = new Date(currentSession.date_end);
+            const sessionStart = currentSession.date;
+            const sessionEnd = currentSession.endDate || new Date(sessionStart.getTime() + getSessionDuration(currentSession.type));
             
             if (now >= sessionStart && now <= sessionEnd) {
               setSessionStatus("live");
@@ -58,54 +59,159 @@ export function RaceCountdown() {
               setSessionStatus("upcoming");
             }
           }
-        } else {
-          // Fallback to Ergast API if OpenF1 fails
-          await fetchNextRaceFallback();
         }
       } catch (e) {
         console.error("Failed to load session info:", e);
-        await fetchNextRaceFallback();
+        setSessionInfo(null);
       } finally {
         setIsLoading(false);
-      }
-    }
-    
-    async function fetchNextRaceFallback() {
-      try {
-        const res = await fetch("https://api.jolpi.ca/ergast/f1/current/next.json");
-        if (res.ok) {
-          const data = await res.json();
-          const nextRace = data.MRData?.RaceTable?.Races?.[0];
-          if (nextRace) {
-            const raceZuluString = `${nextRace.date}T${nextRace.time || "14:00:00Z"}`;
-            setSessionInfo({
-              session_key: 0,
-              session_name: nextRace.raceName,
-              date_start: raceZuluString,
-              date_end: raceZuluString,
-              session_type: "race",
-              circuit_short_name: nextRace.Circuit.circuitName,
-              country_name: nextRace.Circuit.Location.country
-            });
-            setSessionStatus("upcoming");
-          }
-        }
-      } catch (e) {
-        console.error("Fallback API also failed:", e);
-        setSessionInfo(null);
       }
     }
     
     fetchCurrentSession();
   }, []);
 
+  const findCurrentOrNextSession = (races: any[]): SessionInfo | null => {
+    const now = new Date();
+    
+    for (const race of races) {
+      const sessions = extractSessionsFromRace(race);
+      
+      // Find the next upcoming session
+      for (const session of sessions) {
+        if (session.date > now) {
+          return session;
+        }
+      }
+      
+      // If no upcoming sessions in this race, check if race is in future
+      const raceDate = new Date(`${race.date}T${race.time}`);
+      if (raceDate > now) {
+        return {
+          name: race.raceName,
+          type: "race",
+          date: raceDate,
+          circuit: race.Circuit.circuitName,
+          location: race.Circuit.Location.locality,
+          country: race.Circuit.Location.country
+        };
+      }
+    }
+    
+    return null;
+  };
+
+  const extractSessionsFromRace = (race: any): SessionInfo[] => {
+    const sessions: SessionInfo[] = [];
+    const baseDate = race.date;
+    
+    // Add practice sessions
+    if (race.FirstPractice) {
+      sessions.push({
+        name: `${race.raceName} - FP1`,
+        type: "fp1",
+        date: new Date(`${race.FirstPractice.date}T${race.FirstPractice.time}`),
+        circuit: race.Circuit.circuitName,
+        location: race.Circuit.Location.locality,
+        country: race.Circuit.Location.country
+      });
+    }
+    
+    if (race.SecondPractice) {
+      sessions.push({
+        name: `${race.raceName} - FP2`,
+        type: "fp2",
+        date: new Date(`${race.SecondPractice.date}T${race.SecondPractice.time}`),
+        circuit: race.Circuit.circuitName,
+        location: race.Circuit.Location.locality,
+        country: race.Circuit.Location.country
+      });
+    }
+    
+    if (race.ThirdPractice) {
+      sessions.push({
+        name: `${race.raceName} - FP3`,
+        type: "fp3",
+        date: new Date(`${race.ThirdPractice.date}T${race.ThirdPractice.time}`),
+        circuit: race.Circuit.circuitName,
+        location: race.Circuit.Location.locality,
+        country: race.Circuit.Location.country
+      });
+    }
+    
+    // Add sprint sessions (if any)
+    if (race.SprintQualifying) {
+      sessions.push({
+        name: `${race.raceName} - Sprint Qualifying`,
+        type: "qualifying",
+        date: new Date(`${race.SprintQualifying.date}T${race.SprintQualifying.time}`),
+        circuit: race.Circuit.circuitName,
+        location: race.Circuit.Location.locality,
+        country: race.Circuit.Location.country
+      });
+    }
+    
+    if (race.Sprint) {
+      sessions.push({
+        name: `${race.raceName} - Sprint`,
+        type: "sprint",
+        date: new Date(`${race.Sprint.date}T${race.Sprint.time}`),
+        circuit: race.Circuit.circuitName,
+        location: race.Circuit.Location.locality,
+        country: race.Circuit.Location.country
+      });
+    }
+    
+    // Add qualifying
+    if (race.Qualifying) {
+      sessions.push({
+        name: `${race.raceName} - Qualifying`,
+        type: "qualifying",
+        date: new Date(`${race.Qualifying.date}T${race.Qualifying.time}`),
+        circuit: race.Circuit.circuitName,
+        location: race.Circuit.Location.locality,
+        country: race.Circuit.Location.country
+      });
+    }
+    
+    // Add race
+    sessions.push({
+      name: race.raceName,
+      type: "race",
+      date: new Date(`${race.date}T${race.time}`),
+      circuit: race.Circuit.circuitName,
+      location: race.Circuit.Location.locality,
+      country: race.Circuit.Location.country
+    });
+    
+    return sessions.sort((a, b) => a.date.getTime() - b.date.getTime());
+  };
+
+  const getSessionDuration = (type: SessionType): number => {
+    // Return duration in milliseconds
+    switch (type) {
+      case "fp1":
+      case "fp2":
+      case "fp3":
+        return 60 * 60 * 1000; // 1 hour
+      case "qualifying":
+        return 60 * 60 * 1000; // 1 hour
+      case "sprint":
+        return 30 * 60 * 1000; // 30 minutes
+      case "race":
+        return 2 * 60 * 60 * 1000; // 2 hours (approximate)
+      default:
+        return 60 * 60 * 1000;
+    }
+  };
+
   useEffect(() => {
     if (!sessionInfo) return;
 
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const sessionStart = new Date(sessionInfo.date_start).getTime();
-      const sessionEnd = new Date(sessionInfo.date_end).getTime();
+      const sessionStart = sessionInfo.date.getTime();
+      const sessionEnd = sessionInfo.endDate?.getTime() || (sessionStart + getSessionDuration(sessionInfo.type));
       
       let targetTime: number;
       let isCountdown = true;
@@ -153,13 +259,8 @@ export function RaceCountdown() {
       fp1: "FP1",
       fp2: "FP2", 
       fp3: "FP3",
-      sq1: "SQ1",
-      sq2: "SQ2",
-      sq3: "SQ3",
+      qualifying: "Qualifying",
       sprint: "Sprint",
-      q1: "Q1",
-      q2: "Q2",
-      q3: "Q3",
       race: "Race"
     };
     return labels[type] || type.toUpperCase();
@@ -184,7 +285,7 @@ export function RaceCountdown() {
       default:
         return (
           <Badge variant="outline" className="w-fit border-red-500/50 bg-red-500/10 text-red-400 text-[9px] uppercase tracking-wider font-bold px-2 py-0">
-            {t("Next Race")}
+            {t("Next")}
           </Badge>
         );
     }
@@ -214,18 +315,18 @@ export function RaceCountdown() {
         <div className="flex items-center gap-2">
           {getStatusBadge()}
           <Badge variant="outline" className="w-fit border-blue-500/50 bg-blue-500/10 text-blue-400 text-[9px] uppercase tracking-wider font-bold px-2 py-0">
-            {getSessionTypeLabel(sessionInfo.session_type)}
+            {getSessionTypeLabel(sessionInfo.type)}
           </Badge>
         </div>
         <div className="flex items-center gap-1.5 text-white mt-1">
           <MapPin className="h-3 w-3 text-red-400 shrink-0" />
-          <span className="font-bold text-xs sm:text-sm truncate max-w-[180px] sm:max-w-none">{sessionInfo.session_name}</span>
+          <span className="font-bold text-xs sm:text-sm truncate max-w-[180px] sm:max-w-none">{sessionInfo.name}</span>
         </div>
         <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-500">
           <CalendarClock className="h-3 w-3 shrink-0" />
-          <span>{new Date(sessionInfo.date_start).toLocaleDateString('vi-VN')}</span>
+          <span>{sessionInfo.date.toLocaleDateString('vi-VN')}</span>
           <span className="text-slate-700">•</span>
-          <span className="truncate max-w-[120px] sm:max-w-[180px]">{sessionInfo.circuit_short_name}, {sessionInfo.country_name}</span>
+          <span className="truncate max-w-[120px] sm:max-w-[180px]">{sessionInfo.circuit}, {sessionInfo.country}</span>
         </div>
       </div>
       
