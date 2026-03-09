@@ -9,8 +9,8 @@ const payloadSchema = z.object({
 });
 
 const planUsdPrice = {
-  dolphin_friend: 10,
-  dolphin_neon: 28
+  dolphin_friend: 5,
+  dolphin_neon: 16
 } as const;
 
 export async function POST(request: NextRequest) {
@@ -24,7 +24,11 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     const body = payloadSchema.parse(await request.json());
-    const localized = await getLocalizedPrice(planUsdPrice[body.plan], cookieStore);
+    
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip");
+    const countryHeader = request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry");
+    const localized = await getLocalizedPrice(planUsdPrice[body.plan], cookieStore, { ip, countryHeader });
+
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
     const { error: subscriptionError } = await supabase.from("subscriptions").upsert(

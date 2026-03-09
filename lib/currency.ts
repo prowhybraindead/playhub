@@ -2,8 +2,8 @@ import { createServerSupabaseClient } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 
 const FX_API = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json";
-const GEO_API = "https://get.geojs.io/v1/ip/country.json";
-const FX_FALLBACK = "https://api.exchangerate.host/latest?base=USD";
+const GEO_API = "https://get.geojs.io/v1/ip/country";
+const FX_FALLBACK = "https://open.er-api.com/v6/latest/USD";
 
 // VI: Ánh xạ quốc gia -> tiền tệ mặc định để hiển thị giá bản địa.
 // EN: Country to default currency mapping for localized plan pricing.
@@ -33,9 +33,11 @@ type GeoResponse = {
   country_code?: string;
 };
 
-async function fetchGeoCountryCode(): Promise<string> {
+async function fetchGeoCountryCode(ip?: string | null, countryHeader?: string | null): Promise<string> {
+  if (countryHeader) return countryHeader.toUpperCase();
   try {
-    const response = await fetch(GEO_API, { next: { revalidate: 3600 } });
+    const url = ip ? `${GEO_API}/${ip}.json` : `${GEO_API}.json`;
+    const response = await fetch(url, { next: { revalidate: 3600 } });
     if (!response.ok) return "US";
     const data = (await response.json()) as GeoResponse;
     return data.country_code ?? data.country ?? "US";
@@ -101,13 +103,16 @@ export async function getRateWithCache(currencyCode: string, cookieStore: Parame
 
 export async function getLocalizedPrice(
   baseUsdPrice: number,
-  cookieStore: Parameters<typeof createServerSupabaseClient>[0]
+  cookieStore: Parameters<typeof createServerSupabaseClient>[0],
+  clientInfo?: { ip?: string | null; countryHeader?: string | null }
 ) {
-  const country = await fetchGeoCountryCode();
+  const country = await fetchGeoCountryCode(clientInfo?.ip, clientInfo?.countryHeader);
   const currency = COUNTRY_TO_CURRENCY[country] ?? "USD";
   const rate = await getRateWithCache(currency, cookieStore);
   const adjustedUsd = baseUsdPrice * regionMultiplier(country);
   const converted = adjustedUsd * rate;
+  
+  const locale = country === "VN" ? "vi-VN" : country === "DE" ? "de-DE" : country === "FR" ? "fr-FR" : "en-US";
 
   return {
     country,
@@ -116,6 +121,6 @@ export async function getLocalizedPrice(
     baseUsdPrice,
     adjustedUsd,
     converted,
-    formatted: formatCurrency(converted, currency)
+    formatted: formatCurrency(converted, currency, locale)
   };
 }
