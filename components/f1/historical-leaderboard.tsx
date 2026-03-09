@@ -77,14 +77,17 @@ const teamColors: Record<string, string> = {
   "Aston Martin": "#229971",
   "Alpine F1 Team": "#0093cc",
   "Williams": "#64C4FF",
-  "Racing Bulls": "#6692FF",
-  "Kick Sauber": "#52E252",
+  "RB F1 Team": "#6692FF",
+  "Sauber": "#52E252",
   "Haas F1 Team": "#B6BABD",
   "AlphaTauri": "#5E8FAA",
   "Alfa Romeo": "#C92D4B",
   "Racing Point": "#F596C8",
   "Renault": "#FFF500",
   "Cadillac F1 Team": "#D4AF37", // Gold/Black for Cadillac
+  "Audi": "#C0C0C0",
+  "Toro Rosso": "#5E8FAA",
+  "Force India": "#FF69B4",
 };
 
 const teamLogoUrls: Record<string, string> = {
@@ -95,14 +98,17 @@ const teamLogoUrls: Record<string, string> = {
   "Aston Martin": "/f1-logos/astonmartin.svg",
   "Alpine F1 Team": "/f1-logos/alpine.svg",
   "Williams": "/f1-logos/williams.svg",
-  "Racing Bulls": "/f1-logos/racingbulls.svg",
-  "Kick Sauber": "/f1-logos/kicksauber.svg",
+  "RB F1 Team": "/f1-logos/racingbulls.svg",
+  "Sauber": "/f1-logos/kicksauber.svg",
   "Haas F1 Team": "/f1-logos/haas.svg",
   "AlphaTauri": "/f1-logos/alphatauri.svg",
   "Alfa Romeo": "/f1-logos/alfaromeo.svg",
   "Racing Point": "/f1-logos/racingpoint.svg",
   "Renault": "/f1-logos/renault.svg",
   "Cadillac F1 Team": "/f1-logos/cadilac.svg",
+  "Audi": "/f1-logos/audi.svg",
+  "Toro Rosso": "/f1-logos/tororosso.svg",
+  "Force India": "/f1-logos/forceindia.svg",
 };
 
 const podiumEmojis: Record<string, string> = { "1": "🥇", "2": "🥈", "3": "🥉" };
