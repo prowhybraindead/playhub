@@ -16,7 +16,7 @@ const LABELS: Record<Locale, string> = {
   es: "Español"
 };
 
-export function Header({ title, subtitle, extra }: { title: string; subtitle?: string; extra?: React.ReactNode }) {
+export function Header({ title, subtitle, extra, leftContent }: { title?: string; subtitle?: string; extra?: React.ReactNode; leftContent?: React.ReactNode }) {
   const { t, locale, setLocale } = useTranslation();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -36,10 +36,14 @@ export function Header({ title, subtitle, extra }: { title: string; subtitle?: s
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
         <div className="flex items-center gap-3">
           <MobileSidebar />
-          <div>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t(title)}</h1>
-          {subtitle ? <p className="text-sm text-muted-foreground">{t(subtitle)}</p> : null}
-          </div>
+          {leftContent ? (
+            leftContent
+          ) : (
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t(title)}</h1>
+              {subtitle ? <p className="text-sm text-muted-foreground">{t(subtitle)}</p> : null}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {extra}
