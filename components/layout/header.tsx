@@ -5,6 +5,7 @@ import { Waves, Globe, ChevronDown } from "lucide-react";
 import { MobileSidebar } from "@/components/layout/mobile-sidebar";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { useTranslation, Locale } from "@/components/providers/i18n-provider";
+import { DolphinLogo } from "@/components/ui/dolphin-logo";
 
 const LABELS: Record<Locale, string> = {
   en: "English",
@@ -35,12 +36,13 @@ export function Header({ title, subtitle, extra, leftContent }: { title?: string
     <header className="glass-panel-heavy px-4 py-4 md:px-8 border-b-0 sticky top-0 z-20">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
         <div className="flex items-center gap-3">
+          <DolphinLogo />
           <MobileSidebar />
           {leftContent ? (
             leftContent
           ) : (
             <div>
-              <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t(title)}</h1>
+              {title && <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t(title)}</h1>}
               {subtitle ? <p className="text-sm text-muted-foreground">{t(subtitle)}</p> : null}
             </div>
           )}
