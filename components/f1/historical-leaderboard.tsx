@@ -88,21 +88,21 @@ const teamColors: Record<string, string> = {
 };
 
 const teamLogoUrls: Record<string, string> = {
-  "Mercedes": "https://www.google.com/s2/favicons?domain=mercedesamgf1.com&sz=128",
-  "Red Bull": "https://www.google.com/s2/favicons?domain=redbullracing.com&sz=128",
-  "Ferrari": "https://www.google.com/s2/favicons?domain=ferrari.com&sz=128",
-  "McLaren": "https://www.google.com/s2/favicons?domain=mclaren.com&sz=128",
-  "Aston Martin": "https://www.google.com/s2/favicons?domain=astonmartinf1.com&sz=128",
-  "Alpine F1 Team": "https://www.google.com/s2/favicons?domain=alpinecars.com&sz=128",
-  "Williams": "https://www.google.com/s2/favicons?domain=williamsf1.com&sz=128",
-  "Racing Bulls": "https://www.google.com/s2/favicons?domain=visacashapprb.com&sz=128",
-  "Kick Sauber": "https://www.google.com/s2/favicons?domain=sauber-group.com&sz=128",
-  "Haas F1 Team": "https://www.google.com/s2/favicons?domain=haasf1team.com&sz=128",
-  "AlphaTauri": "https://www.google.com/s2/favicons?domain=scuderiaalphatauri.com&sz=128",
-  "Alfa Romeo": "https://www.google.com/s2/favicons?domain=sauber-group.com&sz=128",
-  "Racing Point": "https://www.google.com/s2/favicons?domain=astonmartinf1.com&sz=128",
-  "Renault": "https://www.google.com/s2/favicons?domain=renaultgroup.com&sz=128",
-  "Cadillac F1 Team": "https://www.google.com/s2/favicons?domain=cadillac.com&sz=128",
+  "Mercedes": "/f1-logos/mercedes.svg",
+  "Red Bull": "/f1-logos/redbull.svg",
+  "Ferrari": "/f1-logos/ferrari.svg",
+  "McLaren": "/f1-logos/mclaren.svg",
+  "Aston Martin": "/f1-logos/astonmartin.svg",
+  "Alpine F1 Team": "/f1-logos/alpine.svg",
+  "Williams": "/f1-logos/williams.svg",
+  "Racing Bulls": "/f1-logos/racingbulls.svg",
+  "Kick Sauber": "/f1-logos/kicksauber.svg",
+  "Haas F1 Team": "/f1-logos/haas.svg",
+  "AlphaTauri": "/f1-logos/alphatauri.svg",
+  "Alfa Romeo": "/f1-logos/alfaromeo.svg",
+  "Racing Point": "/f1-logos/racingpoint.svg",
+  "Renault": "/f1-logos/renault.svg",
+  "Cadillac F1 Team": "/f1-logos/cadilac.svg",
 };
 
 const podiumEmojis: Record<string, string> = { "1": "🥇", "2": "🥈", "3": "🥉" };
