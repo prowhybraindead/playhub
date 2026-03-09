@@ -26,18 +26,16 @@ export default async function Formula1Page() {
       <div className="flex-1 px-3 py-4 md:px-6 md:py-6">
         <div className="mx-auto w-full max-w-[1700px] space-y-4">
           {/* Section intro */}
-          <div className="flex items-center gap-4">
-            {/* F1 Logo Accent */}
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-lg shadow-red-500/20 overflow-hidden shrink-0">
-              <img src="https://www.google.com/s2/favicons?domain=formula1.com&sz=128" alt="F1 Logo" className="w-full h-full object-contain p-2" />
-            </div>
-            <div>
-              <h2 className="flex items-center gap-2 text-xl font-extrabold uppercase tracking-tight text-white sm:text-2xl md:text-3xl">
-                <span className="sm:hidden text-red-500">F1</span>
-                <span className="hidden sm:inline text-red-500">Formula 1</span>
-                <span className="text-white/90">History Hub</span>
-              </h2>
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500">Race Archives • AI Analysis • Interactive Dashboard</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* F1 Logo */}
+              <a href="https://www.formula1.com" target="_blank" rel="noopener noreferrer" className="flex h-16 w-16 items-center justify-center rounded-xl bg-white shadow-lg shadow-red-500/20 overflow-hidden shrink-0 hover:shadow-red-500/40 transition-shadow">
+                <img src="/f1-logos/formula1.svg" alt="Formula 1 Official Website" className="w-full h-full object-contain p-2" />
+              </a>
+              {/* TV360 Logo */}
+              <a href="https://tv360.vn/tv/tv360-12" target="_blank" rel="noopener noreferrer" className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-lg shadow-blue-500/20 overflow-hidden shrink-0 hover:shadow-blue-500/40 transition-shadow">
+                <img src="/f1-logos/tv360.svg" alt="TV360 - Formula 1 Broadcast" className="w-full h-full object-contain p-1" />
+              </a>
             </div>
           </div>
 
