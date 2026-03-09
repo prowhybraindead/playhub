@@ -47,13 +47,21 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
   const chatChannelRef = useRef<any>(null);
   const lastTypingBroadcast = useRef<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+const containerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // only auto-scroll when user is already near the bottom
+    const container = containerRef.current;
+    if (container) {
+      const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+      if (distance < 100) {
+        scrollToBottom();
+      }
+    }
   }, [messages, typingUsers]);
 
   // Clear stale typing indicators
@@ -340,7 +348,7 @@ export function RealtimeChat({ userId, initialRoom }: { userId: string; initialR
 
           {/* Messages */}
           <CardContent className="flex-1 overflow-hidden flex flex-col px-0 py-0">
-            <div className="flex-1 overflow-auto px-3 sm:px-4 py-3 space-y-3">
+            <div ref={containerRef} className="flex-1 overflow-auto px-3 sm:px-4 py-3 space-y-3">
               {messages.map((message) => {
                 const isGemini = message.user_id === null;
                 const isMe = message.user_id === userId;

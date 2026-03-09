@@ -60,12 +60,17 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
   }, [historicalContext]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    // only scroll if close to bottom or auto scroll has been re-enabled
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (autoScrollEnabled && distance < 100) {
+      el.scrollTop = el.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, autoScrollEnabled]);
 
   const sendToAI = useCallback(async (prompt: string, isAutomatic: boolean) => {
     if (isLoadingRef.current) return;
@@ -161,6 +166,14 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
     }
   };
 
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    // if user scrolls up more than threshold, disable auto scroll until they return
+    setAutoScrollEnabled(distance < 100);
+  };
+
   return (
     <Card className="bg-slate-900/80 border-slate-800/50 backdrop-blur-sm h-full flex flex-col rounded-2xl shadow-2xl overflow-hidden">
       <CardHeader className="pb-2.5 pt-3 px-3 sm:px-4 border-b border-slate-800/30 bg-gradient-to-r from-slate-900/90 to-emerald-950/30">
@@ -203,7 +216,7 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
 
       <CardContent className="px-2 sm:px-3 pb-2 sm:pb-3 pt-2 flex-1 overflow-hidden flex flex-col gap-2">
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin" ref={scrollRef}>
+        <div onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin" ref={scrollRef}>
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs text-center p-4 gap-2">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">

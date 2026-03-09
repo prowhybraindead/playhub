@@ -16,7 +16,7 @@ const LABELS: Record<Locale, string> = {
   es: "Español"
 };
 
-export function Header({ title, subtitle }: { title: string; subtitle?: string }) {
+export function Header({ title, subtitle, extra }: { title: string; subtitle?: string; extra?: React.ReactNode }) {
   const { t, locale, setLocale } = useTranslation();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -42,6 +42,7 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {extra}
           <div className="relative" ref={langRef}>
             <button 
               type="button"
