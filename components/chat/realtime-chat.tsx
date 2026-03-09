@@ -55,6 +55,9 @@ const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // only auto-scroll when user is already near the bottom
+    // typing indicator updates used to trigger this effect previously,
+    // but that caused the view to jump down whenever the AI started
+    // typing. we only care about new messages now.
     const container = containerRef.current;
     if (container) {
       const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
@@ -62,7 +65,7 @@ const containerRef = useRef<HTMLDivElement>(null);
         scrollToBottom();
       }
     }
-  }, [messages, typingUsers]);
+  }, [messages]);
 
   // Clear stale typing indicators
   useEffect(() => {
@@ -347,7 +350,7 @@ const containerRef = useRef<HTMLDivElement>(null);
           )}
 
           {/* Messages */}
-          <CardContent className="flex-1 overflow-hidden flex flex-col px-0 py-0">
+          <CardContent className="relative flex-1 overflow-hidden flex flex-col px-0 py-0">
             <div ref={containerRef} className="flex-1 overflow-auto px-3 sm:px-4 py-3 space-y-3">
               {messages.map((message) => {
                 const isGemini = message.user_id === null;
@@ -388,9 +391,9 @@ const containerRef = useRef<HTMLDivElement>(null);
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Typing Indicators */}
+            {/* Typing Indicators (absolutely positioned so they don't resize the scroll area) */}
             {Object.keys(typingUsers).filter(id => id !== userId).length > 0 && (
-              <div className="px-4 pb-2 pt-1 flex items-center gap-1.5 shrink-0">
+              <div className="absolute bottom-14 left-0 w-full px-4 pb-2 pt-1 flex items-center gap-1.5">
                 <span className="text-[10px] sm:text-xs text-slate-400 italic">
                   {Object.keys(typingUsers).filter(id => id !== userId).map(id => {
                     if (id === 'gemini') return 'Gemini Bot ✨';

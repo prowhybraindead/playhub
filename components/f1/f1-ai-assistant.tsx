@@ -66,11 +66,13 @@ export function F1AIAssistant({ historicalContext, currentLanguage = "en" }: { h
     const el = scrollRef.current;
     if (!el) return;
     // only scroll if close to bottom or auto scroll has been re-enabled
+    // typing/loading state should *not* force a scroll by itself,
+    // otherwise the view jumps when the AI starts thinking.
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
     if (autoScrollEnabled && distance < 100) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [messages, isLoading, autoScrollEnabled]);
+  }, [messages, autoScrollEnabled]);
 
   const sendToAI = useCallback(async (prompt: string, isAutomatic: boolean) => {
     if (isLoadingRef.current) return;
