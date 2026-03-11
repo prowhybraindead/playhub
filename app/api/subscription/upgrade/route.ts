@@ -30,7 +30,11 @@ export async function POST(request: NextRequest) {
     const localized = await getLocalizedPrice(planUsdPrice[body.plan], cookieStore, { ip, countryHeader });
 
     const scriptsApiUrl = process.env.SCRIPTS_API_URL ?? "https://scripts-api.selfservice.io.vn";
-    const accessToken = cookieStore.get("sb-access-token")?.value;
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    const accessToken = session?.access_token;
 
     if (accessToken) {
       try {
@@ -68,35 +72,22 @@ export async function POST(request: NextRequest) {
           if (checkout?.checkoutUrl) {
             return NextResponse.json({ checkoutUrl: checkout.checkoutUrl });
           }
+        } else {
+          const err = await response.text().catch(() => "");
+          return NextResponse.json(
+            { message: "Failed to create Scripts checkout session", details: err.slice(0, 1000) },
+            { status: 502 }
+          );
         }
       } catch {
-        // If Scripts integration fails, fall back to local fake upgrade
+        return NextResponse.json({ message: "Failed to contact Scripts API" }, { status: 502 });
       }
     }
 
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-    const { error: subscriptionError } = await supabase.from("subscriptions").upsert(
-      {
-        user_id: user.id,
-        plan: body.plan,
-        expires_at: expiresAt
-      },
-      { onConflict: "user_id" }
+    return NextResponse.json(
+      { message: "Missing Supabase session token; cannot start Scripts checkout" },
+      { status: 401 }
     );
-    if (subscriptionError) throw subscriptionError;
-
-    const { error: transactionError } = await supabase.from("transactions").insert({
-      user_id: user.id,
-      plan: body.plan,
-      amount_usd: planUsdPrice[body.plan],
-      currency_code: localized.currency,
-      converted_amount: Number(localized.converted.toFixed(2)),
-      status: "success"
-    });
-    if (transactionError) throw transactionError;
-
-    return NextResponse.json({ success: true, localized });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : "Upgrade failed" }, { status: 400 });
   }
