@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     try {
       const merchantOrderId = `sub_${user.id}_${body.plan}_${Date.now()}`;
 
-      const response = await fetch(`${scriptsApiUrl}/api/v1/checkout/create`, {
+      const response = await fetch(`${scriptsApiUrl}/checkout/create`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${scriptsSecretKey}`,
