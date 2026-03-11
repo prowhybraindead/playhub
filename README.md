@@ -74,14 +74,14 @@ You must fill in the following API keys for the app to function fully:
 
 - **Environment variables** (see `ScriptsAPI.md` for full details):
   - `SCRIPTS_API_URL` – base URL for Scripts backend (default: `https://scripts-api.selfservice.io.vn`).
+  - `SCRIPTS_SECRET_KEY` – secret API key used to authenticate your backend when calling Scripts.
   - `SCRIPTS_WEBHOOK_SECRET` – HMAC secret used to verify incoming webhooks from Scripts.
 - **How the flow works**:
   - The `/upgrade` page calls `POST /api/subscription/upgrade` when a user chooses a plan.
   - The API route will:
     - Compute localized pricing as before.
-    - Try to create a checkout session via `POST {SCRIPTS_API_URL}/api/v1/checkout/create` (using the user’s Supabase JWT as bearer).
+    - Try to create a checkout session via `POST {SCRIPTS_API_URL}/api/v1/checkout/create` (using `SCRIPTS_SECRET_KEY` as Bearer token).
     - If successful, respond with `checkoutUrl`, and the client redirects the user to Scripts’ hosted checkout.
-    - If Scripts is not configured or fails, it falls back to the original fake-upgrade behaviour.
   - Scripts sends `payment.success` webhooks to `POST /api/webhooks/scripts`:
     - Webhook signatures are verified using `SCRIPTS_WEBHOOK_SECRET` (HMAC-SHA256 of the raw body).
     - `merchantOrderId` encodes `sub_{userId}_{plan}_{timestamp}`.
