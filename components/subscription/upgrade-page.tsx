@@ -58,6 +58,14 @@ export function UpgradePage({ prices, currentPlan }: UpgradePageProps) {
         body: JSON.stringify({ plan })
       });
       if (!res.ok) throw new Error("Upgrade failed");
+
+      const data = await res.json();
+
+      if (data?.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
       toast.success(`Fake payment successful! You are now on ${plan}.`);
       window.location.reload();
     } catch (error) {

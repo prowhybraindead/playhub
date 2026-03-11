@@ -39,11 +39,12 @@ Your personal ocean of fun. A premium, aesthetic dashboard built with Next.js 14
 - **Official Videos**: Automatically searches the **YouTube Data API v3** to find official music videos, rendering them in a floating, minimizable `<YouTubePlayer>` using `react-player`.
 - **Global Radio**: Stream international radio stations.
 
-### 💳 Dynamic Currency & Upgrades (Mocked)
+### 💳 Dynamic Currency & Upgrades (Scripts-ready)
 
 - Base pricing in USD.
 - Auto-detects user country via `api.country.is`.
 - Converts currency in real-time via Fawazahmed API (or Frankfurter), caching exchange rates in Supabase for 24 hours.
+- Upgrade flow is wired to a real payment gateway **Scripts** (Stripe-like sandbox for VietQR & wallets). If `SCRIPTS_API_URL`/`SCRIPTS_WEBHOOK_SECRET` are configured, the `/upgrade` page will create a checkout session and redirect to Scripts; `payment.success` webhooks will activate your Supabase `subscriptions`.
 
 ## 🛠️ Quick Start
 
@@ -68,6 +69,25 @@ You must fill in the following API keys for the app to function fully:
 - `OPENROUTER_API_KEY_1` & `OPENROUTER_API_KEY_2` (For i18n Translation, F1 Commentary, Fantasy Co-writer, and Realtime Chatbot)
 - `GEMINI_API_KEY` (Optional, previously used for chat)
 - `NEXT_PUBLIC_THEAUDIODB_API_KEY` (Defaults to "2" for dev test endpoints)
+
+### 🔐 Scripts Payment Integration
+
+- **Environment variables** (see `ScriptsAPI.md` for full details):
+  - `SCRIPTS_API_URL` – base URL for Scripts backend (default: `https://scripts-api.selfservice.io.vn`).
+  - `SCRIPTS_WEBHOOK_SECRET` – HMAC secret used to verify incoming webhooks from Scripts.
+- **How the flow works**:
+  - The `/upgrade` page calls `POST /api/subscription/upgrade` when a user chooses a plan.
+  - The API route will:
+    - Compute localized pricing as before.
+    - Try to create a checkout session via `POST {SCRIPTS_API_URL}/api/v1/checkout/create` (using the user’s Supabase JWT as bearer).
+    - If successful, respond with `checkoutUrl`, and the client redirects the user to Scripts’ hosted checkout.
+    - If Scripts is not configured or fails, it falls back to the original fake-upgrade behaviour.
+  - Scripts sends `payment.success` webhooks to `POST /api/webhooks/scripts`:
+    - Webhook signatures are verified using `SCRIPTS_WEBHOOK_SECRET` (HMAC-SHA256 of the raw body).
+    - `merchantOrderId` encodes `sub_{userId}_{plan}_{timestamp}`.
+    - On `payment.success`, the webhook handler:
+      - Upserts the `subscriptions` row for that `user_id`/`plan` with a 30-day expiry.
+      - Inserts a `transactions` row marked as `success`.
 
 **3. Database Schema:**
 
